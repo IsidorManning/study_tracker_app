@@ -14,9 +14,11 @@
     "@mui/material": "^7.1.0",
     "@supabase/supabase-js": "^2.49.4",
     "@tabler/icons-react": "^3.33.0",
+    "framer-motion": "^12.12.1",
     "next": "15.3.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

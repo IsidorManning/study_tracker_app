@@ -1,8 +1,11 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { IconPlayerPlay, IconPlayerPause, IconList } from '@tabler/icons-react';
+import { IconPlayerPlay, IconPlayerPause, IconList, IconX } from '@tabler/icons-react';
+import { useAuth } from '@/lib/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
 const Timer = () => {
+  const { user } = useAuth();
   const [time, setTime] = useState(0); // in seconds
   const [isRunning, setIsRunning] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -10,6 +13,14 @@ const Timer = () => {
   const [inputTime, setInputTime] = useState('');
   const [rawInput, setRawInput] = useState('');
   const [shouldStart, setShouldStart] = useState(false);
+  
+  // Session tracking states
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+  const [pauseCount, setPauseCount] = useState(0);
+  const [pausedSeconds, setPausedSeconds] = useState(0);
+  const [lastPauseTime, setLastPauseTime] = useState(null);
+  const [initialTime, setInitialTime] = useState(0);
+  const [addedTime, setAddedTime] = useState(0); // Track added time
 
   const presets = [
     { label: '30 minutes', value: 30 * 60 },
@@ -17,6 +28,12 @@ const Timer = () => {
     { label: '1 hour', value: 60 * 60 },
     { label: '1.5 hours', value: 90 * 60 },
     { label: '2 hours', value: 120 * 60 },
+  ];
+
+  const quickAddTimes = [
+    { label: '+5m', value: 5 * 60 },
+    { label: '+20m', value: 20 * 60 },
+    { label: '+40m', value: 40 * 60 },
   ];
 
   useEffect(() => {
@@ -27,6 +44,7 @@ const Timer = () => {
         if (prev <= 1) {
           clearInterval(interval);
           setIsRunning(false);
+          handleSessionEnd(false); // Timer completed naturally
           return 0;
         }
         return prev - 1;
@@ -48,12 +66,103 @@ const Timer = () => {
   };
 
   const handleStart = () => {
-    if (time > 0) setIsRunning(true);
+    if (time > 0) {
+      setIsRunning(true);
+      if (!sessionStartTime) {
+        setSessionStartTime(new Date());
+        setInitialTime(time);
+      }
+    }
   };
 
-  const handlePause = () => setIsRunning(false);
+  const handlePause = () => {
+    if (isRunning) {
+      setPauseCount(prev => prev + 1);
+      setLastPauseTime(new Date());
+    } else if (lastPauseTime) {
+      // Calculate paused duration when resuming
+      const pauseDuration = Math.floor((new Date() - lastPauseTime) / 1000);
+      setPausedSeconds(prev => prev + pauseDuration);
+      setLastPauseTime(null);
+    }
+    setIsRunning(false);
+  };
 
-  const handleStop = () => {
+  const handleAddTime = (seconds) => {
+    setTime(prev => prev + seconds);
+    setAddedTime(prev => prev + seconds);
+  };
+
+  const handleSessionEnd = async (interrupted) => {
+    if (!sessionStartTime) return;
+
+    const endedAt = new Date();
+    // Calculate actual time spent in seconds
+    const actualSeconds = Math.floor((endedAt - sessionStartTime) / 1000);
+    // Subtract paused time to get the actual study time
+    const totalSeconds = actualSeconds - pausedSeconds;
+    
+    try {
+      // First check if user is authenticated
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const sessionData = {
+        user_id: user.id,
+        start_time: sessionStartTime.toISOString(),
+        end_time: endedAt.toISOString(),
+        total_seconds: totalSeconds,
+        pause_count: pauseCount,
+        paused_seconds: pausedSeconds,
+        interrupted: interrupted,
+        added_time: addedTime,
+      };
+
+      console.log('Attempting to save session with data:', sessionData);
+
+      const { data, error } = await supabase
+        .from('study_sessions')
+        .insert(sessionData)
+        .select();
+
+      if (error) {
+        console.error('Supabase error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+
+      console.log('Session saved successfully:', data);
+
+      // Reset all session tracking states
+      setSessionStartTime(null);
+      setPauseCount(0);
+      setPausedSeconds(0);
+      setLastPauseTime(null);
+      setInitialTime(0);
+      setAddedTime(0);
+      setTime(0);
+    } catch (error) {
+      console.error('Error saving session:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        stack: error.stack
+      });
+      // You might want to show this error to the user
+      alert(`Failed to save session: ${error.message}`);
+    }
+  };
+
+  const handleExit = () => {
+    if (sessionStartTime) {
+      handleSessionEnd(true); // Session was interrupted
+    }
     setIsRunning(false);
     setTime(0);
   };
@@ -158,7 +267,7 @@ const Timer = () => {
                 />
                 <button 
                   type="submit"
-                  className="mt-2 text-acc-2 hover:text-main transition-colors"
+                  className=" text-acc-2 hover:text-main transition-colors"
                 >
                   Press Enter to confirm
                 </button>
@@ -197,30 +306,52 @@ const Timer = () => {
 
           <div className="h-px bg-acc-1 mb-8 border-white"></div>
 
-          <div className="flex justify-center align-center">
-            {!isRunning ? (
+          <div className="flex flex-col items-center gap-4">
+            {/* Quick add time buttons */}
+            <div className="flex gap-2 mb-4">
+              {quickAddTimes.map(({ label, value }) => (
+                <button
+                  key={value}
+                  onClick={() => handleAddTime(value)}
+                  className="px-4 py-2 rounded-full bg-mbg-3 text-main hover:bg-mbg-1 transition-colors text-sm"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-center align-center gap-4">
+              {!isRunning ? (
+                <button
+                  onClick={handleStart}
+                  className="px-20 rounded-full bg-main text-bg1 hover:bg-opacity-90 transition-colors"
+                >
+                  <IconPlayerPlay size={24} />
+                </button>
+              ) : (
+                <button
+                  onClick={handlePause}
+                  className="px-20 rounded-full bg-main text-bg1 hover:bg-opacity-90 transition-colors"
+                >
+                  <IconPlayerPause size={24} />
+                </button>
+              )}
+              
               <button
-                onClick={handleStart}
-                className="px-20 rounded-full bg-main text-bg1 hover:bg-opacity-90 transition-colors"
+                onClick={handleExit}
+                className="px-20 rounded-full bg-red-600 text-bg1 hover:bg-red-700 transition-colors"
               >
-                <IconPlayerPlay size={24} />
+                <IconX size={24} />
               </button>
-            ) : (
-              <button
-                onClick={handlePause}
-                className="px-20 rounded-full bg-main text-bg1 hover:bg-opacity-90 transition-colors"
-              >
-                <IconPlayerPause size={24} />
-              </button>
-            )}
-            
-            <div className='flex flex-row justify-center align-center'>
-              <button
-                onMouseEnter={() => setShowPresets(true)}
-                className="text-acc-2 ml-6 hover:text-main transition-colors"
-              >
-                <IconList size={32} />
-              </button>
+              
+              <div className='flex flex-row justify-center align-center'>
+                <button
+                  onMouseEnter={() => setShowPresets(true)}
+                  className="text-acc-2 ml-6 hover:text-main transition-colors"
+                >
+                  <IconList size={32} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
