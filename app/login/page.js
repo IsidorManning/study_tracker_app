@@ -4,6 +4,7 @@ import { IconBrandGoogle, IconBrandGithub } from '@tabler/icons-react';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import { Button, TextField, Checkbox, FormControlLabel, Box, Typography, Container, Paper } from '@mui/material';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -47,131 +48,233 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-mbg-1 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-main">
-            Welcome back
-          </h2>
-          <p className="mt-2 text-sm text-acc-2">
-            Please sign in to your account
-          </p>
-        </div>
+    <Container maxWidth="sm">
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: 4,
+        }}
+        className='rounded-xl'
+      >
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            width: '100%',
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+          }}
+        >
+          {/* Header */}
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Typography variant="h4" component="h1" color="pink" gutterBottom>
+              Welcome back
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Please sign in to your account
+            </Typography>
+          </Box>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
+          {/* Error Message */}
+          {error && (
+            <Box sx={{ bgcolor: 'error.light', p: 2, borderRadius: 1, mb: 2 }}>
+              <Typography color="error">{error}</Typography>
+            </Box>
+          )}
 
-        {/* Social Login Buttons */}
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center justify-center space-x-4">
-            <button
-              type="button"
+          {/* Social Login Buttons */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<IconBrandGoogle sx={{ color: 'text.pink' }} />}
               onClick={() => handleSocialLogin('google')}
-              className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-main bg-mbg-2 rounded-lg hover:bg-mbg-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-main transition-colors"
+              sx={{ 
+                textTransform: 'none',
+                color: 'text.pink',
+                borderColor: 'text.pink',
+                '&:hover': {
+                  backgroundColor: 'background.secondary',
+                  opacity: 0.9
+                }
+              }}
             >
-              <IconBrandGoogle className="w-5 h-5 mr-2" />
               Continue with Google
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<IconBrandGithub sx={{ color: 'text.pink' }} />}
               onClick={() => handleSocialLogin('github')}
-              className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-main bg-mbg-2 rounded-lg hover:bg-mbg-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-main transition-colors"
+              sx={{ 
+                textTransform: 'none',
+                color: 'text.pink',
+                borderColor: 'text.pink',
+                '&:hover': {
+                  backgroundColor: 'background.secondary',
+                  opacity: 0.9
+                }
+              }}
             >
-              <IconBrandGithub className="w-5 h-5 mr-2" />
               Continue with GitHub
-            </button>
-          </div>
+            </Button>
+          </Box>
 
-          <div className="relative">
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-mbg-1 text-acc-2">Or continue with:</span>
-            </div>
-          </div>
-        </div>
+          <Box sx={{ textAlign: 'center', my: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              Or continue with:
+            </Typography>
+          </Box>
 
-        {/* Login Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-acc-1 placeholder-acc-2 text-main rounded-lg focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent bg-mbg-2"
-                placeholder="Email address"
+          {/* Login Form */}
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+            <TextField
+              fullWidth
+              label="Email address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              margin="normal"
+              required
+              autoComplete="email"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'text.pink',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'text.pink',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'text.pink',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'text.pink',
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: 'text.pink',
+                },
+                '& .MuiInputBase-input': {
+                  color: 'text.pink',
+                },
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              margin="normal"
+              required
+              autoComplete="current-password"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'text.pink',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'text.pink',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'text.pink',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'text.pink',
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: 'text.pink',
+                },
+                '& .MuiInputBase-input': {
+                  color: 'text.pink',
+                },
+              }}
+            />
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    sx={{
+                      color: 'text.pink',
+                      '&.Mui-checked': {
+                        color: 'text.pink',
+                      },
+                    }}
+                  />
+                }
+                label={
+                  <Typography sx={{ color: 'text.pink' }}>
+                    Remember me
+                  </Typography>
+                }
               />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-acc-1 placeholder-acc-2 text-main rounded-lg focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent bg-mbg-2"
-                placeholder="Password"
-              />
-            </div>
-          </div>
+              <Button 
+                sx={{ 
+                  textTransform: 'none',
+                  color: 'text.pink',
+                  '&:hover': {
+                    backgroundColor: 'background.secondary',
+                    opacity: 0.9
+                  }
+                }}
+              >
+                Forgot password?
+              </Button>
+            </Box>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 text-main focus:ring-main border-acc-1 rounded bg-mbg-2"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-acc-2">
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a href="#" className="font-medium text-main hover:text-acc-2 transition-colors">
-                Forgot your password?
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <button
+            <Button
+              fullWidth
+              variant="contained"
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-bg1 bg-main hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-main transition-colors ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              sx={{ 
+                mt: 3, 
+                mb: 2, 
+                py: 1.5,
+                bgcolor: 'text.pink',
+                '&:hover': {
+                  bgcolor: 'text.pink',
+                  opacity: 0.9
+                },
+                '&:disabled': {
+                  bgcolor: 'text.pink',
+                  opacity: 0.5
+                }
+              }}
             >
               {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
+            </Button>
 
-          <div className="text-center">
-            <p className="text-sm text-acc-2">
-              Don&apos;t have an account?
-              <a href="/signup" className="ml-2 inline font-medium text-main hover:text-acc-2 transition-colors">
-                Sign up
-              </a>
-            </p>
-          </div>
-        </form>
-      </div>
-    </div>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Don&apos;t have an account?{' '}
+                <Button
+                  href="/signup"
+                  sx={{ 
+                    textTransform: 'none',
+                    color: 'text.pink',
+                    '&:hover': {
+                      backgroundColor: 'background.secondary',
+                      opacity: 0.9
+                    }
+                  }}
+                >
+                  Sign up
+                </Button>
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
   );
 };
 

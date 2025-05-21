@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { IconX, IconPlus, IconEdit, IconTrash, IconFilter, IconSearch, IconCalendar, IconChartBar } from '@tabler/icons-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button, IconButton, Tooltip } from '@mui/material';
 
 const GoalSidebar = ({ isOpen, onClose, onSave, editingGoal }) => {
   const [formData, setFormData] = useState({
@@ -41,45 +42,45 @@ const GoalSidebar = ({ isOpen, onClose, onSave, editingGoal }) => {
       >
         <div className="p-6 h-full overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-ctext-1">
+            <h2 className="text-2xl font-semibold text-white">
               {editingGoal ? 'Edit Goal' : 'Create Goal'}
             </h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-mbg-2 rounded-lg transition-colors"
             >
-              <IconX className="text-ctext-1" />
+              <IconX className="text-white" />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-ctext-1 mb-1">Title</label>
+              <label className="block text-white mb-1">Title</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-ctext-1"
+                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-ctext-1 mb-1">Description</label>
+              <label className="block text-white mb-1">Description</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-ctext-1"
+                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
                 rows="3"
               />
             </div>
 
             <div>
-              <label className="block text-ctext-1 mb-1">Type</label>
+              <label className="block text-white mb-1">Type</label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-ctext-1"
+                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
               >
                 <option value="weekly_hours">Weekly Study Hours</option>
                 <option value="daily_streak">Daily Study Streak</option>
@@ -90,45 +91,45 @@ const GoalSidebar = ({ isOpen, onClose, onSave, editingGoal }) => {
             </div>
 
             <div>
-              <label className="block text-ctext-1 mb-1">Target Value (hours)</label>
+              <label className="block text-white mb-1">Target Value (hours)</label>
               <input
                 type="number"
                 value={formData.target_value}
                 onChange={(e) => setFormData({ ...formData, target_value: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-ctext-1"
+                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-ctext-1 mb-1">Start Date</label>
+                <label className="block text-white mb-1">Start Date</label>
                 <input
                   type="date"
                   value={formData.start_date}
                   onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-ctext-1"
+                  className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
                   required
                 />
               </div>
               <div>
-                <label className="block text-ctext-1 mb-1">End Date</label>
+                <label className="block text-white mb-1">End Date</label>
                 <input
                   type="date"
                   value={formData.end_date}
                   onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-ctext-1"
+                  className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-ctext-1 mb-1">Status</label>
+              <label className="block text-white mb-1">Status</label>
               <select
                 value={formData.goal_status}
                 onChange={(e) => setFormData({ ...formData, goal_status: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-ctext-1"
+                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
               >
                 <option value="active">Active</option>
                 <option value="completed">Completed</option>
@@ -139,7 +140,7 @@ const GoalSidebar = ({ isOpen, onClose, onSave, editingGoal }) => {
 
             <button
               type="submit"
-              className="w-full py-2 px-4 bg-main text-white rounded-lg hover:bg-main/90 transition-colors"
+              className="w-full py-2 px-4 bg-pink text-white rounded-lg hover:bg-pink/90 transition-colors"
             >
               {editingGoal ? 'Update Goal' : 'Create Goal'}
             </button>
@@ -169,14 +170,14 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, goalTitle }) => 
             transition={{ type: "spring", duration: 0.5 }}
             className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-mbg-2 p-6 rounded-lg shadow-xl z-50 w-full max-w-md"
           >
-            <h3 className="text-xl font-semibold text-ctext-1 mb-4">Delete Goal</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">Delete Goal</h3>
             <p className="text-acc-2 mb-6">
               Are you sure you want to delete &quot;{goalTitle}&quot;? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-4">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-acc-2 hover:text-ctext-1 transition-colors"
+                className="px-4 py-2 text-acc-2 hover:text-white transition-colors"
               >
                 Cancel
               </button>
@@ -199,7 +200,7 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const progress = (goal.current_value / goal.target_value) * 100;
-  const daysRemaining = Math.ceil((new Date(goal.end_date) - new Date()) / (1000 * 60 * 60 * 24));
+  const daysRepinking = Math.ceil((new Date(goal.end_date) - new Date()) / (1000 * 60 * 60 * 24));
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -239,26 +240,38 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
       >
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-lg font-semibold text-ctext-1">{goal.title}</h3>
+            <h3 className="text-lg font-semibold text-white">{goal.title}</h3>
             <p className="text-acc-2 text-sm mt-1">{goal.description}</p>
           </div>
           <div className="flex gap-2">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => onEdit(goal)}
-              className="p-2 hover:bg-mbg-3 rounded-lg transition-colors"
-            >
-              <IconEdit className="text-acc-2" />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleDeleteClick}
-              className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-            >
-              <IconTrash className="text-red-500" />
-            </motion.button>
+            <Tooltip title="Edit Goal">
+              <IconButton
+                onClick={() => onEdit(goal)}
+                sx={{ 
+                  color: 'white',
+                  '&:hover': { 
+                    bgcolor: 'rgba(206, 171, 177, 0.1)',
+                    transform: 'scale(1.1)'
+                  }
+                }}
+              >
+                <IconEdit size={20} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete Goal">
+              <IconButton
+                onClick={handleDeleteClick}
+                sx={{ 
+                  color: '#EF4444',
+                  '&:hover': { 
+                    bgcolor: 'rgba(239, 68, 68, 0.1)',
+                    transform: 'scale(1.1)'
+                  }
+                }}
+              >
+                <IconTrash size={20} />
+              </IconButton>
+            </Tooltip>
           </div>
         </div>
 
@@ -266,14 +279,14 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
         <div className="mt-4">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-acc-2">Progress</span>
-            <span className="text-ctext-1">{Math.round(progress)}%</span>
+            <span className="text-white">{Math.round(progress)}%</span>
           </div>
           <div className="w-full bg-mbg-3 rounded-full h-2">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="bg-main h-2 rounded-full"
+              className="bg-pink h-2 rounded-full"
             />
           </div>
         </div>
@@ -287,9 +300,9 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
           </span>
         </div>
 
-        {daysRemaining > 0 && (
+        {daysRepinking > 0 && (
           <div className="mt-2 text-sm text-acc-2">
-            {daysRemaining} days remaining
+            {daysRepinking} days repinking
           </div>
         )}
       </motion.div>
@@ -319,7 +332,7 @@ const GoalStats = ({ goals }) => {
 
   return (
     <div className="bg-mbg-2 p-4 rounded-lg border border-acc-1">
-      <h3 className="text-lg font-semibold text-ctext-1 mb-4">Goal Statistics</h3>
+      <h3 className="text-lg font-semibold text-white mb-4">Goal Statistics</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -354,7 +367,7 @@ const GoalProgressChart = ({ goals }) => {
 
   return (
     <div className="bg-mbg-2 p-4 rounded-lg border border-acc-1">
-      <h3 className="text-lg font-semibold text-ctext-1 mb-4">Goal Progress</h3>
+      <h3 className="text-lg font-semibold text-white mb-4">Goal Progress</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>
@@ -535,7 +548,7 @@ export default function GoalsPage() {
   if (loading) {
     return (
       <div className="p-8 pt-24">
-        <div className="text-ctext-1">Loading...</div>
+        <div className="text-white">Loading...</div>
       </div>
     );
   }
@@ -544,25 +557,41 @@ export default function GoalsPage() {
     <div className="p-8 pt-24 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-ctext-1">Goals</h1>
+          <h1 className="text-4xl font-bold text-white">Goals</h1>
           <div className="flex gap-4">
-            <button
-              onClick={() => setView(view === 'list' ? 'stats' : 'list')}
-              className="flex items-center gap-2 px-4 py-2 text-acc-2 hover:text-ctext-1 transition-colors"
-            >
-              {view === 'list' ? <IconChartBar size={20} /> : <IconCalendar size={20} />}
-            </button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setEditingGoal(null);
-                setIsSidebarOpen(true);
-              }}
-              className="flex items-center gap-2 text-main hover:text-main/80 transition-colors"
-            >
-              <IconPlus size={24} />
-            </motion.button>
+            <Tooltip title={view === 'list' ? 'View Statistics' : 'View List'}>
+              <IconButton
+                onClick={() => setView(view === 'list' ? 'stats' : 'list')}
+                sx={{ 
+                  color: 'white',
+                  '&:hover': { 
+                    bgcolor: 'rgba(206, 171, 177, 0.1)',
+                    color: '#CEABB1',
+                    transform: 'scale(1.1)'
+                  }
+                }}
+              >
+                {view === 'list' ? <IconChartBar size={20} /> : <IconCalendar size={20} />}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Create New Goal">
+              <IconButton
+                onClick={() => {
+                  setEditingGoal(null);
+                  setIsSidebarOpen(true);
+                }}
+                sx={{ 
+                  color: 'white',
+                  '&:hover': { 
+                    bgcolor: 'rgba(206, 171, 177, 0.1)',
+                    color: '#CEABB1',
+                    transform: 'scale(1.1)'
+                  }
+                }}
+              >
+                <IconPlus size={24} />
+              </IconButton>
+            </Tooltip>
           </div>
         </div>
 
@@ -581,26 +610,27 @@ export default function GoalsPage() {
                   placeholder="Search goals..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full p-2 pl-10 bg-transparent border-b border-acc-1/30 text-ctext-1 focus:outline-none focus:border-main transition-colors"
+                  className="w-full p-2 pl-10 bg-transparent border-b border-white text-white focus:outline-none focus:border-pink transition-colors"
+                  style={{ color: 'white' }}
                 />
-                <IconSearch className="absolute left-2 top-2.5 text-acc-2 group-focus-within:text-main transition-colors" size={20} />
+                <IconSearch className="absolute left-2 top-2.5 text-acc-2 group-focus-within:text-pink transition-colors" size={20} />
               </div>
               <div className="relative group">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none p-2 pl-10 pr-8 bg-transparent border-b border-acc-1/30 text-ctext-1 focus:outline-none focus:border-main transition-colors cursor-pointer"
-                >
-                  <option value="all">All</option>
-                  <option value="active">Active</option>
-                  <option value="completed">Completed</option>
-                  <option value="paused">Paused</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-                <IconFilter className="absolute left-2 top-2.5 text-acc-2 group-focus-within:text-main transition-colors" size={20} />
-                <div className="absolute right-2 top-2.5 pointer-events-none">
-                  <IconX size={16} className="text-acc-2 rotate-45" />
-                </div>
+                <Tooltip title="Filter by Status">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="appearance-none p-2 pl-10 pr-8 bg-transparent border-b border-acc-1/30 text-white focus:outline-none focus:border-pink transition-colors cursor-pointer"
+                    style={{ color: 'white' }}
+                  >
+                    <option value="all" style={{ color: 'white', backgroundColor: '#1a1a1a' }}>All</option>
+                    <option value="active" style={{ color: 'white', backgroundColor: '#1a1a1a' }}>Active</option>
+                    <option value="completed" style={{ color: 'white', backgroundColor: '#1a1a1a' }}>Completed</option>
+                    <option value="paused" style={{ color: 'white', backgroundColor: '#1a1a1a' }}>Paused</option>
+                    <option value="cancelled" style={{ color: 'white', backgroundColor: '#1a1a1a' }}>Cancelled</option>
+                  </select>
+                </Tooltip>
+                <IconFilter className="absolute left-2 top-2.5 text-acc-2 group-focus-within:text-pink transition-colors" size={20} />
               </div>
             </div>
 

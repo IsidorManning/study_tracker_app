@@ -4,11 +4,14 @@ import { usePathname } from 'next/navigation';
 import {
     IconMenu2,
     IconX,
-    IconUserCircle
+    IconUserCircle,
+    IconSettings,
+    IconLogout
 } from "@tabler/icons-react";
 import UnderlineLink from './animations/UnderlineLink';
 import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const Navbar = () => {
   const [isUserIconOpen, setIsSettingsOpen] = useState(false);
@@ -19,7 +22,7 @@ const Navbar = () => {
   const { user, signOut } = useAuth();
 
   const navItems = [
-    { name: 'Dashboard', path: '/' },
+    { name: 'Dashboard', path: '/dashboard' },
     { name: 'Sessions', path: '/sessions' },
     { name: 'Goals', path: '/goals' },
     { name: 'Analytics', path: '/analytics' },
@@ -89,20 +92,20 @@ const Navbar = () => {
     <>
       {/* Desktop Navbar */}
       <nav className={`
-        bg-bg1 fixed top-0 left-0 right-0 z-50
-        border-b border-[#c6d2d9] px-0
+        bg-black fixed top-0 left-0 right-0 z-[50]
+        border-b border-white px-0
         transition-transform duration-300 ease-in-out
         ${isVisible ? 'translate-y-0' : '-translate-y-full'}
         hidden md:block
       `}>
         <div className="mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-[65px]">
             {/* Logo */}
             <div>
               <UnderlineLink 
-                className="mr-4 font-bold text-xl text-main" 
+                className="mr-4 font-bold text-xl text-white" 
                 href="/" 
-                textColor="text-main-2"
+                textColor="text-white"
               >
                 Stydis
               </UnderlineLink>
@@ -116,8 +119,8 @@ const Navbar = () => {
                   href={item.path}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                     pathname === item.path
-                      ? 'bg-mbg-3 text-main'
-                      : 'hover:bg-mbg-3 hover:text-white'
+                      ? 'text-pink'
+                      : 'hover:text-pink'
                   }`}
                   textColor="text-1"
                 >
@@ -127,43 +130,44 @@ const Navbar = () => {
             </div>
 
             {/* Desktop User Icon Dropdown */}
-            <div className="relative">
+            <div className="relative group">
               <button
-                onClick={() => setIsSettingsOpen(!isUserIconOpen)}
                 className="flex items-center focus:outline-none"
               >
                 {getAvatarUrl() ? (
-                  <img
+                  <Image
                     src={getAvatarUrl()}
                     alt="Account"
-                    className="h-8 w-8 rounded-full object-cover"
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover transition-transform duration-200 group-hover:scale-110"
                   />
                 ) : (
-                  <IconUserCircle className="h-8 w-8 text-main" />
+                  <IconUserCircle className="h-8 w-8 text-white transition-transform duration-200 group-hover:scale-110" />
                 )}
               </button>
                 
               {/* Dropdown Menu */}
-              {isUserIconOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-mbg-2 ring-1 ring-black ring-opacity-5">
-                  <div className="py-1" role="menu" aria-orientation="vertical">
-                    <Link
-                      href="/settings"
-                      className="block px-4 py-2 text-sm text-main hover:bg-mbg-3"
-                      role="menuitem"
-                    >
-                      Settings
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-sm text-main hover:bg-mbg-3"
-                      role="menuitem"
-                    >
-                      Sign out
-                    </button>
-                  </div>
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-black border border-white/10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-in-out transform origin-top-right">
+                <div className="py-1" role="menu" aria-orientation="vertical">
+                  <Link
+                    href="/settings"
+                    className="flex items-center px-4 py-2 text-sm text-white hover:bg-black-2 transition-colors duration-200"
+                    role="menuitem"
+                  >
+                    <IconSettings className="w-4 h-4 mr-2" />
+                    Settings
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-black-2 transition-colors duration-200"
+                    role="menuitem"
+                  >
+                    <IconLogout className="w-4 h-4 mr-2" />
+                    Sign out
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -172,7 +176,7 @@ const Navbar = () => {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="md:hidden fixed top-4 right-4 z-50 p-2 rounded-md text-main hover:bg-mbg-3 focus:outline-none"
+        className="md:hidden fixed top-4 right-4 z-50 p-2 rounded-md text-main hover:bg-black-black focus:outline-none"
       >
         {isMobileMenuOpen ? (
           <IconX className="h-6 w-6" />
@@ -183,7 +187,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-mbg-1">
+        <div className="md:hidden fixed inset-0 z-40 bg-black-black">
           <div className="pt-20 pb-3 space-y-1">
             {navItems.map((item) => (
               <Link
@@ -191,8 +195,8 @@ const Navbar = () => {
                 href={item.path}
                 className={`block px-3 py-2 rounded-md text-base font-medium ${
                   pathname === item.path
-                    ? 'bg-mbg-3 text-main'
-                    : 'text-acc-2 hover:bg-mbg-3 hover:text-main'
+                    ? 'bg-black-black text-white'
+                    : 'text-white hover:bg-black-black hover:text-pink'
                 }`}
               >
                 {item.name}
@@ -200,13 +204,13 @@ const Navbar = () => {
             ))}
             <Link
               href="/settings"
-              className="block px-3 py-2 rounded-md text-base font-medium text-acc-2 hover:bg-mbg-3 hover:text-main"
+              className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-black-mbg-black-3 hover:text-pink"
             >
               Settings
             </Link>
             <button
               onClick={handleSignOut}
-              className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-acc-2 hover:bg-mbg-3 hover:text-main"
+              className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-pink hover:bg-black-mbg-black-3 hover:text-pink"
             >
               Sign out
             </button>

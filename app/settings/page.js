@@ -2,6 +2,28 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
+import { 
+  TextField, 
+  Button, 
+  Paper, 
+  Typography, 
+  Box, 
+  Alert, 
+  IconButton,
+  InputAdornment,
+  Divider,
+  Card,
+  CardContent,
+  Stack
+} from '@mui/material';
+import { 
+  IconUser, 
+  IconMail, 
+  IconLock, 
+  IconTrash,
+  IconEye,
+  IconEyeOff
+} from '@tabler/icons-react';
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -11,6 +33,8 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -112,151 +136,282 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-main mb-8">Settings</h1>
+    <Box className="min-h-screen p-8">
+      <Box className="max-w-2xl mx-auto">
+        <Typography variant="h4" component="h1" color="text.pink" gutterBottom>
+          Settings
+        </Typography>
 
         {/* Profile Section */}
-        <div className="bg-mbg-2 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-main mb-4">Profile</h2>
+        <Paper 
+          elevation={3} 
+          sx={{ 
+            p: 4, 
+            mb: 4, 
+            bgcolor: 'background.paper',
+            borderRadius: 2
+          }}
+        >
+          <Stack spacing={4}>
+            <Box>
+              <Typography variant="h6" color="text.pink" gutterBottom>
+                <IconUser className="inline-block mr-2" size={20} />
+                Profile
+              </Typography>
 
-          {/* Username Form */}
-          <form onSubmit={handleUpdateProfile} className="space-y-4 mb-8">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-acc-2 mb-2">
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 bg-mbg-1 border border-acc-1 rounded-lg text-main focus:outline-none focus:ring-2 focus:ring-main"
-                placeholder="Enter your username"
-              />
-            </div>
+              {/* Username Form */}
+              <form onSubmit={handleUpdateProfile}>
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': { borderColor: 'text.pink' },
+                        '&:hover fieldset': { borderColor: 'text.pink' },
+                        '&.Mui-focused fieldset': { borderColor: 'text.pink' },
+                      },
+                      '& .MuiInputLabel-root': { color: 'text.pink' },
+                      '& .MuiInputLabel-root.Mui-focused': { color: 'text.pink' },
+                      '& .MuiInputBase-input': { color: 'text.pink' },
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={loading}
+                    sx={{
+                      bgcolor: 'text.pink',
+                      '&:hover': {
+                        bgcolor: 'text.pink',
+                        opacity: 0.9,
+                        transform: 'scale(1.02)',
+                      },
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                  >
+                    {loading ? 'Updating...' : 'Update Username'}
+                  </Button>
+                </Stack>
+              </form>
+            </Box>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-2 px-4 rounded-lg text-bg1 bg-main hover:bg-opacity-90 transition-colors ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {loading ? 'Updating...' : 'Update Username'}
-            </button>
-          </form>
+            <Divider sx={{ borderColor: 'text.pink', opacity: 0.2 }} />
 
-          {/* Email Form */}
-          <form onSubmit={handleUpdateEmail} className="space-y-4 mb-8">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-acc-2 mb-2">
+            {/* Email Form */}
+            <Box>
+              <Typography variant="h6" color="text.pink" gutterBottom>
+                <IconMail className="inline-block mr-2" size={20} />
                 Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-mbg-1 border border-acc-1 rounded-lg text-main focus:outline-none focus:ring-2 focus:ring-main"
-                placeholder="Enter your email"
-              />
-            </div>
+              </Typography>
+              <form onSubmit={handleUpdateEmail}>
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': { borderColor: 'text.pink' },
+                        '&:hover fieldset': { borderColor: 'text.pink' },
+                        '&.Mui-focused fieldset': { borderColor: 'text.pink' },
+                      },
+                      '& .MuiInputLabel-root': { color: 'text.pink' },
+                      '& .MuiInputLabel-root.Mui-focused': { color: 'text.pink' },
+                      '& .MuiInputBase-input': { color: 'text.pink' },
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={loading}
+                    sx={{
+                      bgcolor: 'text.pink',
+                      '&:hover': {
+                        bgcolor: 'text.pink',
+                        opacity: 0.9,
+                        transform: 'scale(1.02)',
+                      },
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                  >
+                    {loading ? 'Updating...' : 'Update Email'}
+                  </Button>
+                </Stack>
+              </form>
+            </Box>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-2 px-4 rounded-lg text-bg1 bg-main hover:bg-opacity-90 transition-colors ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {loading ? 'Updating...' : 'Update Email'}
-            </button>
-          </form>
+            <Divider sx={{ borderColor: 'text.pink', opacity: 0.2 }} />
 
-          {/* Password Form */}
-          <form onSubmit={handleUpdatePassword} className="space-y-4 mb-8">
-            <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-acc-2 mb-2">
-                New Password
-              </label>
-              <input
-                type="password"
-                id="newPassword"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-mbg-1 border border-acc-1 rounded-lg text-main focus:outline-none focus:ring-2 focus:ring-main"
-                placeholder="Enter new password"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-acc-2 mb-2">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-mbg-1 border border-acc-1 rounded-lg text-main focus:outline-none focus:ring-2 focus:ring-main"
-                placeholder="Confirm new password"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-2 px-4 rounded-lg text-bg1 bg-main hover:bg-opacity-90 transition-colors ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {loading ? 'Updating...' : 'Update Password'}
-            </button>
-          </form>
+            {/* Password Form */}
+            <Box>
+              <Typography variant="h6" color="text.pink" gutterBottom>
+                <IconLock className="inline-block mr-2" size={20} />
+                Password
+              </Typography>
+              <form onSubmit={handleUpdatePassword}>
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="New Password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    variant="outlined"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                            sx={{ color: 'text.pink' }}
+                          >
+                            {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': { borderColor: 'text.pink' },
+                        '&:hover fieldset': { borderColor: 'text.pink' },
+                        '&.Mui-focused fieldset': { borderColor: 'text.pink' },
+                      },
+                      '& .MuiInputLabel-root': { color: 'text.pink' },
+                      '& .MuiInputLabel-root.Mui-focused': { color: 'text.pink' },
+                      '& .MuiInputBase-input': { color: 'text.pink' },
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Confirm Password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    variant="outlined"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            edge="end"
+                            sx={{ color: 'text.pink' }}
+                          >
+                            {showConfirmPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': { borderColor: 'text.pink' },
+                        '&:hover fieldset': { borderColor: 'text.pink' },
+                        '&.Mui-focused fieldset': { borderColor: 'text.pink' },
+                      },
+                      '& .MuiInputLabel-root': { color: 'text.pink' },
+                      '& .MuiInputLabel-root.Mui-focused': { color: 'text.pink' },
+                      '& .MuiInputBase-input': { color: 'text.pink' },
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={loading}
+                    sx={{
+                      bgcolor: 'text.pink',
+                      '&:hover': {
+                        bgcolor: 'text.pink',
+                        opacity: 0.9,
+                        transform: 'scale(1.02)',
+                      },
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                  >
+                    {loading ? 'Updating...' : 'Update Password'}
+                  </Button>
+                </Stack>
+              </form>
+            </Box>
+          </Stack>
 
           {/* Message Display */}
           {message.text && (
-            <div className={`p-3 rounded-lg mb-4 ${
-              message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`}>
+            <Alert 
+              severity={message.type === 'success' ? 'success' : 'error'}
+              sx={{ mt: 2 }}
+            >
               {message.text}
-            </div>
+            </Alert>
           )}
-        </div>
+        </Paper>
 
         {/* Account Information */}
-        <div className="bg-mbg-2 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-main mb-4">Account Information</h2>
-          <div className="space-y-2">
-            <p className="text-acc-2">
-              <span className="font-medium">Email:</span> {user?.email}
-            </p>
-            <p className="text-acc-2">
-              <span className="font-medium">Provider:</span> {user?.app_metadata?.provider || 'Email'}
-            </p>
-            <p className="text-acc-2">
-              <span className="font-medium">Last Sign In:</span>{' '}
+        <Paper 
+          elevation={3} 
+          sx={{ 
+            p: 4, 
+            mb: 4, 
+            bgcolor: 'background.paper',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h6" color="text.pink" gutterBottom>
+            Account Information
+          </Typography>
+          <Stack spacing={2}>
+            <Typography color="text.pink">
+              <strong>Email:</strong> {user?.email}
+            </Typography>
+            <Typography color="text.pink">
+              <strong>Provider:</strong> {user?.app_metadata?.provider || 'Email'}
+            </Typography>
+            <Typography color="text.pink">
+              <strong>Last Sign In:</strong>{' '}
               {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
-            </p>
-          </div>
-        </div>
+            </Typography>
+          </Stack>
+        </Paper>
 
         {/* Delete Account Section */}
-        <div className="bg-red-50 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-red-600 mb-4">Danger Zone</h2>
-          <p className="text-red-600 mb-4">
+        <Paper 
+          elevation={3} 
+          sx={{ 
+            p: 4, 
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'error.main'
+          }}
+        >
+          <Typography variant="h6" color="error" gutterBottom>
+            <IconTrash className="inline-block mr-2" size={20} />
+            Danger Zone
+          </Typography>
+          <Typography color="error" paragraph>
             Once you delete your account, there is no going back. Please be certain.
-          </p>
-          <button
+          </Typography>
+          <Button
+            variant="outlined"
+            color="error"
             onClick={handleDeleteAccount}
             disabled={loading}
-            className="w-full py-2 px-4 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors"
+            sx={{
+              '&:hover': {
+                transform: 'scale(1.02)',
+              },
+              transition: 'all 0.2s ease-in-out',
+            }}
           >
             Delete Account
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </Paper>
+      </Box>
+    </Box>
   );
 } 
