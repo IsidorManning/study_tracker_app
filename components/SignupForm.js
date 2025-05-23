@@ -44,6 +44,15 @@ const SignupForm = () => {
       const { data, error } = await signUp({ email, password, username });
       if (error) throw error;
       
+      // Add user to user_roles table with default 'user' role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert([
+          { user_id: data.user.id, role: 'user' }
+        ]);
+
+      if (roleError) throw roleError;
+      
       // Redirect to dashboard on successful signup
       router.push('/');
     } catch (error) {

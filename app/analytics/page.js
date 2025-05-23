@@ -813,6 +813,98 @@ const StreakAnalytics = ({ streakData }) => {
   );
 };
 
+const TopicKnowledge = ({ data }) => {
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-blackg-2 p-3 border border-text-white rounded-lg">
+          <p className="text-white">Topic: {label}</p>
+          <p className="text-white">Rating: {payload[0].value}/5</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <InsightCard
+      title="Topic Knowledge Progress"
+      description="Track your knowledge level across different topics"
+      icon={IconBrain}
+      dataExplanation={
+        <div className="space-y-4">
+          <div>
+            <h4 className="text-white font-semibold mb-2">Data Structure</h4>
+            <pre className="bg-black p-3 rounded-lg text-sm">
+{`{
+  name: string,     // Topic name
+  rating: number    // Knowledge rating (1-5)
+}`}
+            </pre>
+          </div>
+          <div>
+            <h4 className="text-white font-semibold mb-2">Visualization Details</h4>
+            <ul className="list-disc pl-4 space-y-2">
+              <li>Shows your current knowledge level for each topic</li>
+              <li>Ratings range from 1 (beginner) to 5 (expert)</li>
+              <li>Helps identify areas that need more focus</li>
+              <li>Hover to see exact ratings for each topic</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-white font-semibold mb-2">Data Source</h4>
+            <p>Based on your self-assessed knowledge ratings for each topic.</p>
+          </div>
+        </div>
+      }
+    >
+      <div className="h-[300px] mb-6">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+            <XAxis 
+              dataKey="name" 
+              stroke="#666"
+              angle={-45}
+              textAnchor="end"
+              height={100}
+            />
+            <YAxis 
+              stroke="#666"
+              domain={[0, 5]}
+              ticks={[1, 2, 3, 4, 5]}
+              label={{ 
+                value: 'Knowledge Level', 
+                angle: -90, 
+                position: 'insideLeft',
+                style: { textAnchor: 'middle', fill: '#666' }
+              }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar 
+              dataKey="rating" 
+              fill="#FCD34D" 
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div>
+        <h4 className="text-white font-semibold mb-2">How to Use This Visualization</h4>
+        <p className="text-white mb-4">
+          Understanding your topic knowledge levels helps optimize your study strategy. Consider:
+        </p>
+        <ul className="list-disc pl-4 space-y-2 text-white">
+          <li>Weak areas: Focus on topics with lower ratings</li>
+          <li>Strong areas: Use these as foundations for related topics</li>
+          <li>Progress tracking: Update ratings as your knowledge grows</li>
+          <li>Study planning: Allocate more time to lower-rated topics</li>
+        </ul>
+      </div>
+    </InsightCard>
+  );
+};
+
 export default function AnalyticsPage() {
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -825,6 +917,7 @@ export default function AnalyticsPage() {
   const [focusData, setFocusData] = useState([]);
   const [streakData, setStreakData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [topicData, setTopicData] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -833,6 +926,7 @@ export default function AnalyticsPage() {
       fetchWeeklyData();
       fetchFocusData();
       fetchStreakData();
+      fetchTopicData();
     }
   }, [user, currentMonth]);
 
@@ -937,6 +1031,20 @@ export default function AnalyticsPage() {
     }
   };
 
+  const fetchTopicData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('topics')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (error) throw error;
+      setTopicData(data || []);
+    } catch (error) {
+      console.error('Error fetching topic data:', error);
+    }
+  };
+
   const handleMonthChange = (delta) => {
     const newMonth = new Date(currentMonth);
     newMonth.setMonth(newMonth.getMonth() + delta);
@@ -976,6 +1084,7 @@ export default function AnalyticsPage() {
           </div>
           
           {streakData && <StreakAnalytics streakData={streakData} />}
+          <TopicKnowledge data={topicData} />
         </div>
       </div>
     </div>

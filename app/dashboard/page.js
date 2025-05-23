@@ -26,7 +26,7 @@ const DashboardCard = ({ title, description, href, icon }) => (
   </Link>
 );
 
-const TotalStudyTime = ({ totalSeconds, currentSessionTime, isRunning, formatTime }) => {
+const TotalStudyTime = ({ totalSeconds, currentSessionTime, isRunning, formatTime, isBreak }) => {
   const formatTimeReadable = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -52,7 +52,7 @@ const TotalStudyTime = ({ totalSeconds, currentSessionTime, isRunning, formatTim
         </p>
         {isRunning && (
           <UnderlineLink href="/sessions" className="text-xl text-white hover:text-pink transition-colors duration-200">
-            Current session: <span className="text-pink font-semibold">{formatTime(currentSessionTime)}</span>
+            {isBreak ? 'Break' : 'Current session'}: <span className="text-pink font-semibold">{formatTime(currentSessionTime)}</span>
           </UnderlineLink>
         )}
       </div>
@@ -86,7 +86,7 @@ export default function Dashboard() {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
   const username = user?.user_metadata?.username || user?.user_metadata?.full_name || 'there';
-  const { time, isRunning, totalStudyTime: currentSessionTotalTime, formatTime } = useTimer();
+  const { time, isRunning, totalStudyTime: currentSessionTotalTime, formatTime, isBreak } = useTimer();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -109,7 +109,7 @@ export default function Dashboard() {
           .from('user_streaks')
           .select('current_streak, longest_streak')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (streakError && streakError.code !== 'PGRST116') throw streakError;
         setCurrentStreak(streakData?.current_streak || 0);
@@ -136,6 +136,12 @@ export default function Dashboard() {
       icon: "🎯",
     },
     {
+      title: "Topics",
+      description: "Track your knowledge mastery across different subjects. Rate your understanding and monitor your learning progress.",
+      href: "/topics",
+      icon: "🧠",
+    },
+    {
       title: "Analytics",
       description: "View detailed insights about your study patterns and progress over time.",
       href: "/analytics",
@@ -159,6 +165,7 @@ export default function Dashboard() {
           currentSessionTime={time}
           isRunning={isRunning}
           formatTime={formatTime}
+          isBreak={isBreak}
         />
         <p className="text-xl text-pink-2">
           Your personal study companion. Track, analyze, and achieve your learning goals.

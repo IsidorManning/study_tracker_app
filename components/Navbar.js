@@ -21,11 +21,12 @@ const Navbar = () => {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
 
-  const navItems = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Sessions', path: '/sessions' },
-    { name: 'Goals', path: '/goals' },
-    { name: 'Analytics', path: '/analytics' },
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Sessions', href: '/sessions' },
+    { name: 'Goals', href: '/goals' },
+    { name: 'Topics', href: '/topics' },
+    { name: 'Analytics', href: '/analytics' },
   ];
 
   useEffect(() => {
@@ -113,12 +114,12 @@ const Navbar = () => {
 
             {/* Desktop Navigation Links */}
             <div className="ml-10 flex items-baseline space-x-4">
-              {navItems.map((item) => (
+              {navigation.map((item) => (
                 <UnderlineLink
-                  key={item.path}
-                  href={item.path}
+                  key={item.href}
+                  href={item.href}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                    pathname === item.path
+                    pathname === item.href
                       ? 'text-pink'
                       : 'hover:text-pink'
                   }`}
@@ -189,12 +190,12 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-black-black">
           <div className="pt-20 pb-3 space-y-1">
-            {navItems.map((item) => (
+            {navigation.map((item) => (
               <Link
-                key={item.path}
-                href={item.path}
+                key={item.href}
+                href={item.href}
                 className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  pathname === item.path
+                  pathname === item.href
                     ? 'bg-black-black text-white'
                     : 'text-white hover:bg-black-black hover:text-pink'
                 }`}

@@ -5,6 +5,7 @@
   --foreground: #0a0a0a;
   --color-white: #fff3f3;
   --color-pink: #CEABB1;
+  --color-black: #0a0a0a;
 }
 
 @theme inline {

@@ -1,9 +1,9 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { IconPlayerPlay, IconPlayerPause, IconList, IconX } from '@tabler/icons-react';
+import { IconPlayerPlay, IconPlayerPause, IconList, IconX, IconMoon, IconClock } from '@tabler/icons-react';
 import { useTimer } from '@/lib/TimerContext';
 
-const CircularProgress = ({ progress, size = 400, strokeWidth = 12 }) => {
+const CircularProgress = ({ progress, size = 400, strokeWidth = 12, isBreak = false }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
@@ -23,14 +23,21 @@ const CircularProgress = ({ progress, size = 400, strokeWidth = 12 }) => {
         />
         {/* Progress circle with gradient */}
         <defs>
-          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#CEABB1" />
-            <stop offset="100%" stopColor="#7DCEA0" />
-          </linearGradient>
+          {isBreak ? (
+            <linearGradient id="breakGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#4A90E2" />
+              <stop offset="100%" stopColor="#9B51E0" />
+            </linearGradient>
+          ) : (
+            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#CEABB1" />
+              <stop offset="100%" stopColor="#7DCEA0" />
+            </linearGradient>
+          )}
         </defs>
         <circle
           className="transition-all duration-1000 ease-linear"
-          stroke="url(#progressGradient)"
+          stroke={isBreak ? "url(#breakGradient)" : "url(#progressGradient)"}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -53,11 +60,18 @@ const Timer = () => {
     startTimer, 
     pauseTimer, 
     resumeTimer, 
-    handleSessionEnd 
+    handleSessionEnd,
+    isBreak,
+    startBreak,
+    handleBreakEnd,
+    isPomodoro,
+    startPomodoro,
+    getPomodoroStatus
   } = useTimer();
   
   const [isEditing, setIsEditing] = useState(false);
   const [showPresets, setShowPresets] = useState(false);
+  const [showPomodoroTooltip, setShowPomodoroTooltip] = useState(false);
   const [inputTime, setInputTime] = useState('');
   const [rawInput, setRawInput] = useState('');
   const [shouldStart, setShouldStart] = useState(false);
@@ -188,10 +202,30 @@ const Timer = () => {
     return ((initialTime - time) / initialTime) * 100;
   };
 
+  const handleBreakToggle = () => {
+    if (isBreak) {
+      handleBreakEnd();
+    } else {
+      startBreak();
+    }
+  };
+
+  const pomodoroStatus = getPomodoroStatus();
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-[80vw] p-6 xl:w-[60vw] rounded-mg sm:rounded-sm xl:rounded-full h-full">
         <div className="bg-black-2 rounded-3xl p-8 shadow-lg flex flex-col items-center ml-8">
+          <div className="text-center mb-4">
+            <h2 className="text-2xl font-bold text-white">
+              {isPomodoro 
+                ? `Pomodoro ${pomodoroStatus?.cycle}/${pomodoroStatus?.totalCycles} - ${pomodoroStatus?.isStudy ? 'Study' : pomodoroStatus?.isLongBreak ? 'Long Break' : 'Short Break'}`
+                : isBreak 
+                  ? 'Break Time' 
+                  : 'Study Time'}
+            </h2>
+          </div>
+
           <div className="relative flex items-center justify-center" onClick={handleTimerClickEvent}>
             {isEditing ? (
               <form onSubmit={handleTimeSubmit} className="text-center">
@@ -216,6 +250,7 @@ const Timer = () => {
                   progress={calculateProgress()} 
                   size={500}
                   strokeWidth={16}
+                  isBreak={isBreak}
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-[50px] sm:text-[70px] md:text-[80px] xl:text-[100px] font-bold text-white">
@@ -229,17 +264,19 @@ const Timer = () => {
           <div className="h-px bg-black mb-8 border-white"></div>
 
           <div className="flex flex-col items-center gap-4">
-            <div className="flex gap-2 mb-4">
-              {quickAddTimes.map(({ label, value }) => (
-                <button
-                  key={value}
-                  onClick={() => handleAddTime(value)}
-                  className="px-4 py-2 rounded-full bg-black-3 text-white hover:bg-black-1 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer text-sm"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            {!isBreak && !isPomodoro && (
+              <div className="flex gap-2 mb-4">
+                {quickAddTimes.map(({ label, value }) => (
+                  <button
+                    key={value}
+                    onClick={() => handleAddTime(value)}
+                    className="px-4 py-2 rounded-full bg-black-3 text-white hover:bg-black-1 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer text-sm"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="flex justify-center items-center gap-4 relative">
               {!isRunning ? (
@@ -259,42 +296,80 @@ const Timer = () => {
               )}
               
               <button
+                onClick={handleBreakToggle}
+                className={`px-20 rounded-full transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer ${
+                  isBreak 
+                    ? 'bg-gradient-to-r from-[#4A90E2] to-[#9B51E0]' 
+                    : 'bg-black-3 hover:bg-black-1'
+                }`}
+              >
+                <IconMoon size={24} className="text-white" />
+              </button>
+
+              <button
                 onClick={handleExit}
-                className="px-20 rounded-full bg-red-600 text-bg1 hover:bg-red-700 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer"
+                className="px-20 rounded-full bg-red-600 text-white hover:bg-red-700 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer"
               >
                 <IconX size={24} />
               </button>
 
-              <div className="relative ml-4">
-                <button
-                  onMouseEnter={() => setShowPresets(true)}
-                  className="text-pink hover:text-white transition-all duration-200 ease-in-out hover:scale-110 cursor-pointer"
-                >
-                  <IconList size={32} />
-                </button>
-                
-                <div
-                  className={`
-                    absolute right-0 bottom-full mb-2
-                    overflow-hidden bg-black p-2 rounded-lg
-                    transition-all duration-200 ease-out
-                    ${showPresets ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0'}
-                  `}
-                  onMouseLeave={() => setShowPresets(false)}
-                >
-                  <div className="bg-black-3 rounded-lg shadow-lg py-2">
-                    {presets.map((p) => (
-                      <button
-                        key={p.value}
-                        onClick={() => handlePresetSelect(p.value)}
-                        className="w-48 mt-2 rounded-full border-1 px-4 py-2 text-left text-white hover:bg-black-2 transition-all duration-200 ease-in-out hover:brightness-[0.70] cursor-pointer"
-                      >
-                        {p.label}
-                      </button>
-                    ))}
+              {!isBreak && !isPomodoro && (
+                <div className="relative ml-4">
+                  <button
+                    onMouseEnter={() => setShowPomodoroTooltip(true)}
+                    onMouseLeave={() => setShowPomodoroTooltip(false)}
+                    onClick={startPomodoro}
+                    className="text-pink hover:text-white transition-all duration-200 ease-in-out hover:scale-110 cursor-pointer"
+                  >
+                    <IconClock size={32} />
+                  </button>
+                  
+                  {showPomodoroTooltip && (
+                    <div className="absolute right-0 bottom-full mb-2 p-4 bg-black-3 rounded-lg shadow-lg w-64">
+                      <h3 className="text-white font-bold mb-2">Pomodoro Technique</h3>
+                      <p className="text-gray-300 text-sm">
+                        A 2-hour session with:
+                        <br />• 4 study blocks (25 min each)
+                        <br />• 3 short breaks (5 min each)
+                        <br />• 1 long break (15 min)
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!isBreak && !isPomodoro && (
+                <div className="relative ml-4">
+                  <button
+                    onMouseEnter={() => setShowPresets(true)}
+                    className="text-pink hover:text-white transition-all duration-200 ease-in-out hover:scale-110 cursor-pointer"
+                  >
+                    <IconList size={32} />
+                  </button>
+                  
+                  <div
+                    className={`
+                      absolute right-0 bottom-full mb-2
+                      overflow-hidden bg-black p-2 rounded-lg
+                      transition-all duration-200 ease-out
+                      ${showPresets ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0'}
+                    `}
+                    onMouseLeave={() => setShowPresets(false)}
+                  >
+                    <div className="bg-black-3 rounded-lg shadow-lg py-2">
+                      {presets.map((p) => (
+                        <button
+                          key={p.value}
+                          onClick={() => handlePresetSelect(p.value)}
+                          className="w-48 mt-2 rounded-full border-1 px-4 py-2 text-left text-white hover:bg-black-2 transition-all duration-200 ease-in-out hover:brightness-[0.70] cursor-pointer"
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

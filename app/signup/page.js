@@ -6,5 +6,4 @@ const signup = () => {
     <SignupPage />
   )
 }
-
 export default signup
