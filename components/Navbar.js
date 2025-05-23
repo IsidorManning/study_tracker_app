@@ -24,8 +24,9 @@ const Navbar = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Sessions', href: '/sessions' },
-    { name: 'Goals', href: '/goals' },
+    { name: 'Schedules', href: '/schedules' },
     { name: 'Topics', href: '/topics' },
+    { name: 'Goals', href: '/goals' },
     { name: 'Analytics', href: '/analytics' },
   ];
 

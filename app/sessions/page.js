@@ -1,7 +1,12 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { IconPlayerPlay, IconPlayerPause, IconList, IconX, IconMoon, IconClock } from '@tabler/icons-react';
+import { IconPlayerPlay, IconPlayerPause, IconList, IconX, IconMoon, IconClock, IconBook } from '@tabler/icons-react';
 import { useTimer } from '@/lib/TimerContext';
+import { useAuth } from '@/lib/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
+import SessionSettingsButton from '@/components/sessions/SessionSettingsButton';
+import PomodoroSettings from '@/components/sessions/PomodoroSettings';
+import Celebration from '@/components/sessions/Celebration';
 
 const CircularProgress = ({ progress, size = 400, strokeWidth = 12, isBreak = false }) => {
   const radius = (size - strokeWidth) / 2;
@@ -52,7 +57,8 @@ const CircularProgress = ({ progress, size = 400, strokeWidth = 12, isBreak = fa
   );
 };
 
-const Timer = () => {
+const Timer = ({ initialDuration, initialTopic }) => {
+  const { user } = useAuth();
   const { 
     time, 
     isRunning, 
@@ -66,7 +72,11 @@ const Timer = () => {
     handleBreakEnd,
     isPomodoro,
     startPomodoro,
-    getPomodoroStatus
+    getPomodoroStatus,
+    selectedTopic,
+    setSelectedTopic,
+    pomodoroSettings,
+    setPomodoroSettings
   } = useTimer();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -75,13 +85,56 @@ const Timer = () => {
   const [inputTime, setInputTime] = useState('');
   const [rawInput, setRawInput] = useState('');
   const [shouldStart, setShouldStart] = useState(false);
-  const [initialTime, setInitialTime] = useState(0);
+  const [initialTime, setInitialTime] = useState(initialDuration || 0);
+  const [showTopicSelector, setShowTopicSelector] = useState(false);
+  const [topics, setTopics] = useState([]);
+  const [showTopicTooltip, setShowTopicTooltip] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showPomodoroSettings, setShowPomodoroSettings] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   useEffect(() => {
-    if (time > 0 && initialTime === 0) {
-      setInitialTime(time);
+    if (user) {
+      fetchTopics();
     }
-  }, [time, initialTime]);
+  }, [user]);
+
+  useEffect(() => {
+    if (initialTopic) {
+      console.log('Setting initial topic:', initialTopic);
+      setSelectedTopic(initialTopic);
+    }
+  }, [initialTopic, setSelectedTopic]);
+
+  useEffect(() => {
+    console.log('Timer component - selectedTopic changed:', selectedTopic);
+  }, [selectedTopic]);
+
+  const fetchTopics = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('topics')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      console.log('Fetched topics from database:', data);
+      setTopics(data || []);
+    } catch (error) {
+      console.error('Error fetching topics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (initialDuration) {
+      setInitialTime(initialDuration);
+      startTimer(initialDuration);
+    }
+  }, [initialDuration]);
 
   const presets = [
     { label: '30 minutes', value: 30 * 60 },
@@ -99,6 +152,10 @@ const Timer = () => {
 
   const handleStart = () => {
     if (time > 0) {
+      console.log('Starting timer with topic:', selectedTopic);
+      console.log('Topic ID type:', typeof selectedTopic?.id);
+      console.log('Topic ID value:', selectedTopic?.id);
+      console.log('Topic ID string representation:', String(selectedTopic?.id));
       setInitialTime(time);
       startTimer(time);
     }
@@ -113,14 +170,16 @@ const Timer = () => {
   };
 
   const handleAddTime = (seconds) => {
+    console.log('Adding time with current topic:', selectedTopic);
+    console.log('Topic ID type:', typeof selectedTopic?.id);
+    console.log('Topic ID value:', selectedTopic?.id);
+    console.log('Topic ID string representation:', String(selectedTopic?.id));
     if (isRunning) {
-      // If timer is running, we need to pause, update time, and resume
       pauseTimer();
       const newTime = time + seconds;
       setInitialTime(newTime);
       startTimer(newTime);
     } else {
-      // If timer is not running, just update the time
       const newTime = time + seconds;
       setInitialTime(newTime);
       startTimer(newTime);
@@ -212,6 +271,127 @@ const Timer = () => {
 
   const pomodoroStatus = getPomodoroStatus();
 
+  const handleTopicSelect = (topic) => {
+    console.log('Topic selected in Timer - Raw data:', topic);
+    console.log('Topic ID type:', typeof topic.topic_id);
+    console.log('Topic ID value:', topic.topic_id);
+    console.log('Topic ID string representation:', String(topic.topic_id));
+    
+    if (!topic || !topic.topic_id) {
+      console.error('Invalid topic selected:', topic);
+      return;
+    }
+
+    // Ensure we're using the full topic object with string ID
+    const selectedTopic = {
+      id: String(topic.topic_id), // Use topic_id instead of id
+      name: topic.name,
+      field: topic.field,
+      description: topic.description,
+      status: topic.status,
+      theoretical: topic.theoretical,
+      practical: topic.practical,
+      problem_solving: topic.problem_solving,
+      recent_practice: topic.recent_practice
+    };
+    console.log('Setting selected topic in Timer - Processed data:', selectedTopic);
+    console.log('Selected topic ID type:', typeof selectedTopic.id);
+    console.log('Selected topic ID value:', selectedTopic.id);
+    setSelectedTopic(selectedTopic);
+    setShowTopicSelector(false);
+  };
+
+  const pomodoroTooltip = (
+    <>
+      <h3 className="text-white font-bold mb-2">Pomodoro Technique</h3>
+      <p className="text-gray-300 text-sm">
+        A 2-hour session with:
+        <br />• 4 study blocks (25 min each)
+        <br />• 3 short breaks (5 min each)
+        <br />• 1 long break (15 min)
+      </p>
+    </>
+  );
+
+  const presetsDropdown = (
+    <div className="bg-black-3 rounded-lg shadow-lg py-2">
+      {presets.map((p) => (
+        <button
+          key={p.value}
+          onClick={() => handlePresetSelect(p.value)}
+          className="w-48 mt-2 rounded-full border-1 px-4 py-2 text-left text-white hover:bg-black-2 transition-all duration-200 ease-in-out hover:brightness-[0.70] cursor-pointer"
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const topicDropdown = (
+    <div className="bg-black-3 rounded-lg shadow-lg py-2 min-w-[200px]">
+      <div className="px-4 py-2 border-b border-black">
+        <h3 className="text-white font-bold">Select Topic</h3>
+        <p className="text-gray-300 text-sm">
+          Choose a topic to track your study session
+        </p>
+      </div>
+      <div className="max-h-[300px] overflow-y-auto">
+        {loading ? (
+          <div className="px-4 py-2 text-white/60 text-center">
+            Loading topics...
+          </div>
+        ) : topics.length === 0 ? (
+          <div className="px-4 py-2 text-white/60 text-center">
+            No topics found
+          </div>
+        ) : (
+          topics.map((topic) => {
+            console.log('Rendering topic in dropdown:', topic);
+            return (
+              <button
+                key={topic.id}
+                onClick={() => {
+                  console.log('Topic clicked in dropdown:', topic);
+                  handleTopicSelect(topic);
+                }}
+                className="w-full px-4 py-2 text-left text-white hover:bg-black-2 transition-all duration-200 ease-in-out hover:brightness-[0.70] cursor-pointer"
+              >
+                <div className="font-medium">{topic.name}</div>
+                <div className="text-sm text-white/60">{topic.field}</div>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+
+  const handlePomodoroSettingsChange = (newSettings) => {
+    setPomodoroSettings(newSettings);
+  };
+
+  const handleStartPomodoro = async () => {
+    if (!selectedTopic) {
+      alert('Please select a topic before starting a Pomodoro session');
+      return;
+    }
+    try {
+      await startPomodoro(pomodoroSettings);
+      setShowPomodoroSettings(false);
+    } catch (error) {
+      console.error('Error starting Pomodoro:', error);
+      alert('Failed to start Pomodoro session. Please try again.');
+    }
+  };
+
+  const handlePomodoroClick = () => {
+    if (!isPomodoro) {
+      setShowPomodoroSettings(true);
+    } else {
+      handleSessionEnd(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-[80vw] p-6 xl:w-[60vw] rounded-mg sm:rounded-sm xl:rounded-full h-full">
@@ -224,6 +404,9 @@ const Timer = () => {
                   ? 'Break Time' 
                   : 'Study Time'}
             </h2>
+            {selectedTopic && (
+              <p className="text-white/80 mt-2">Studying: {selectedTopic.name}</p>
+            )}
           </div>
 
           <div className="relative flex items-center justify-center" onClick={handleTimerClickEvent}>
@@ -314,74 +497,95 @@ const Timer = () => {
               </button>
 
               {!isBreak && !isPomodoro && (
-                <div className="relative ml-4">
+                <>
                   <button
-                    onMouseEnter={() => setShowPomodoroTooltip(true)}
-                    onMouseLeave={() => setShowPomodoroTooltip(false)}
-                    onClick={startPomodoro}
-                    className="text-pink hover:text-white transition-all duration-200 ease-in-out hover:scale-110 cursor-pointer"
+                    onClick={handlePomodoroClick}
+                    className="px-20 rounded-full bg-black-3 text-white hover:bg-black-1 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer"
                   >
-                    <IconClock size={32} />
+                    <IconClock size={24} />
+                    <span className='inline'>(Pomdoro)</span>
                   </button>
-                  
-                  {showPomodoroTooltip && (
-                    <div className="absolute right-0 bottom-full mb-2 p-4 bg-black-3 rounded-lg shadow-lg w-64">
-                      <h3 className="text-white font-bold mb-2">Pomodoro Technique</h3>
-                      <p className="text-gray-300 text-sm">
-                        A 2-hour session with:
-                        <br />• 4 study blocks (25 min each)
-                        <br />• 3 short breaks (5 min each)
-                        <br />• 1 long break (15 min)
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
 
-              {!isBreak && !isPomodoro && (
-                <div className="relative ml-4">
-                  <button
+                  <SessionSettingsButton
+                    icon={IconList}
+                    showDropdown={showPresets}
                     onMouseEnter={() => setShowPresets(true)}
-                    className="text-pink hover:text-white transition-all duration-200 ease-in-out hover:scale-110 cursor-pointer"
-                  >
-                    <IconList size={32} />
-                  </button>
-                  
-                  <div
-                    className={`
-                      absolute right-0 bottom-full mb-2
-                      overflow-hidden bg-black p-2 rounded-lg
-                      transition-all duration-200 ease-out
-                      ${showPresets ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0'}
-                    `}
                     onMouseLeave={() => setShowPresets(false)}
-                  >
-                    <div className="bg-black-3 rounded-lg shadow-lg py-2">
-                      {presets.map((p) => (
-                        <button
-                          key={p.value}
-                          onClick={() => handlePresetSelect(p.value)}
-                          className="w-48 mt-2 rounded-full border-1 px-4 py-2 text-left text-white hover:bg-black-2 transition-all duration-200 ease-in-out hover:brightness-[0.70] cursor-pointer"
-                        >
-                          {p.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                    dropdownContent={presetsDropdown}
+                  />
+
+                  <SessionSettingsButton
+                    icon={IconBook}
+                    showDropdown={showTopicSelector}
+                    onMouseEnter={() => setShowTopicSelector(true)}
+                    onMouseLeave={() => setShowTopicSelector(false)}
+                    dropdownContent={topicDropdown}
+                  />
+                </>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Pomodoro Settings Sidebar */}
+      <PomodoroSettings
+        isOpen={showPomodoroSettings}
+        onClose={() => setShowPomodoroSettings(false)}
+        settings={pomodoroSettings}
+        onSettingsChange={handlePomodoroSettingsChange}
+        onStart={handleStartPomodoro}
+      />
+
+      {showCelebration && (
+        <Celebration
+          onClose={() => setShowCelebration(false)}
+          duration={initialTime - time}
+        />
+      )}
     </div>
   );
 };
 
 export default function SessionsPage() {
+  const [initialDuration, setInitialDuration] = useState(null);
+  const [initialTopic, setInitialTopic] = useState(null);
+  const { user } = useAuth();
+
+  // Handle navigation from schedules
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const duration = params.get('duration');
+    const topicId = params.get('topicId');
+    
+    if (duration) {
+      setInitialDuration(parseInt(duration) * 60); // Convert minutes to seconds
+    }
+    
+    if (topicId && user) {
+      // Fetch topic details from Supabase
+      const fetchTopic = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('topics')
+            .select('*')
+            .eq('id', topicId)
+            .eq('user_id', user.id)
+            .single();
+
+          if (error) throw error;
+          setInitialTopic(data);
+        } catch (error) {
+          console.error('Error fetching topic:', error);
+        }
+      };
+      fetchTopic();
+    }
+  }, [user]);
+
   return (
-    <main className="min-h-screen">
-      <Timer />
-    </main>
+    <div className="min-h-screen bg-black-1">
+      <Timer initialDuration={initialDuration} initialTopic={initialTopic} />
+    </div>
   );
 }
