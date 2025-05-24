@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconClock, IconBook, IconTarget, IconHistory } from '@tabler/icons-react';
 import { Tooltip } from '@mui/material';
 // We will create this component next
 import ScheduleSidebar from '@/components/schedules/ScheduleSidebar';
@@ -51,6 +51,56 @@ const DUMMY_SCHEDULES = [
   },
 ];
 
+const QuickTemplate = ({ title, duration, icon: Icon, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex items-center gap-3 p-4 bg-black-2 rounded-lg hover:bg-black-3 transition-all duration-200"
+  >
+    <div className="p-2 bg-pink/10 rounded-lg">
+      <Icon size={24} className="text-pink" />
+    </div>
+    <div className="text-left">
+      <h3 className="text-white font-medium">{title}</h3>
+      <p className="text-white/60 text-sm">{duration} minutes</p>
+    </div>
+  </button>
+);
+
+const RecentSession = ({ session, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex items-center gap-3 p-4 bg-black-2 rounded-lg hover:bg-black-3 transition-all duration-200"
+  >
+    <div className="p-2 bg-pink/10 rounded-lg">
+      <IconBook size={24} className="text-pink" />
+    </div>
+    <div className="text-left flex-1">
+      <h3 className="text-white font-medium">{session.topic_name}</h3>
+      <p className="text-white/60 text-sm">
+        {new Date(session.created_at).toLocaleDateString()} • {Math.floor(session.duration / 60)} minutes
+      </p>
+    </div>
+  </button>
+);
+
+const TopicCard = ({ topic, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex items-center gap-3 p-4 bg-black-2 rounded-lg hover:bg-black-3 transition-all duration-200"
+  >
+    <div className="p-2 bg-pink/10 rounded-lg">
+      <IconBook size={24} className="text-pink" />
+    </div>
+    <div className="text-left flex-1">
+      <h3 className="text-white font-medium">{topic.name}</h3>
+      <p className="text-white/60 text-sm">{topic.field}</p>
+    </div>
+    <div className="text-pink text-sm">
+      {Math.floor(topic.total_study_time / 60)}h
+    </div>
+  </button>
+);
+
 export default function SchedulesPage() {
   const { user } = useAuth();
   const [schedules, setSchedules] = useState([]);
@@ -60,6 +110,8 @@ export default function SchedulesPage() {
   const [allTopics, setAllTopics] = useState([]); // State to hold all topics
   const [useDummyData, setUseDummyData] = useState(true); // Toggle for dummy data
   const router = useRouter(); // Initialize useRouter
+  const [recentSessions, setRecentSessions] = useState([]);
+  const [topics, setTopics] = useState([]);
 
   useEffect(() => {
     // Fetch data when the user is available or dummy data is toggled
@@ -71,6 +123,7 @@ export default function SchedulesPage() {
       if (user) {
         fetchSchedules();
         fetchAllTopics(); // Fetch all topics here as well
+        fetchRecentSessions();
       } else {
         setLoading(false);
       }
@@ -109,6 +162,30 @@ export default function SchedulesPage() {
       setSchedules([]); // Clear schedules on error
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecentSessions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select(`
+          *,
+          topics (
+            name
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setRecentSessions(data.map(session => ({
+        ...session,
+        topic_name: session.topics?.name || 'No Topic'
+      })));
+    } catch (error) {
+      console.error('Error fetching recent sessions:', error);
     }
   };
 
@@ -177,6 +254,19 @@ export default function SchedulesPage() {
     // Navigate to the timer/sessions page with topicId and duration
     router.push(`/sessions?topicId=${schedule.topic_id}&duration=${schedule.duration}`);
   };
+
+  const startSession = (duration, topicId = null) => {
+    const params = new URLSearchParams();
+    if (duration) params.set('duration', duration);
+    if (topicId) params.set('topicId', topicId);
+    router.push(`/sessions?${params.toString()}`);
+  };
+
+  const quickTemplates = [
+    { title: 'Quick Focus', duration: 25, icon: IconClock },
+    { title: 'Deep Work', duration: 120, icon: IconTarget },
+    { title: 'Review Session', duration: 45, icon: IconBook },
+  ];
 
   if (loading) {
     return (
@@ -248,6 +338,47 @@ export default function SchedulesPage() {
         editingSchedule={editingSchedule}
         allTopics={allTopics} // Pass all topics down
       />
+
+      <div className="max-w-4xl mx-auto space-y-8 mt-8">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-4">Quick Start</h1>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {quickTemplates.map((template) => (
+              <QuickTemplate
+                key={template.title}
+                {...template}
+                onClick={() => startSession(template.duration)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-4">Recent Sessions</h1>
+          <div className="space-y-4">
+            {recentSessions.map((session) => (
+              <RecentSession
+                key={session.id}
+                session={session}
+                onClick={() => startSession(session.duration, session.topic_id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-4">Your Topics</h1>
+          <div className="space-y-4">
+            {topics.map((topic) => (
+              <TopicCard
+                key={topic.id}
+                topic={topic}
+                onClick={() => startSession(25, topic.id)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </main>
   );
 } 

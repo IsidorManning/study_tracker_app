@@ -1,72 +1,33 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { IconPlayerPlay, IconPlayerPause, IconList, IconX, IconMoon, IconClock, IconBook } from '@tabler/icons-react';
+import { 
+  IconPlayerPlay,
+  IconPlayerPause,
+  IconList,
+  IconX,
+  IconMoon,
+  IconClock,
+  IconBook
+} from '@tabler/icons-react';
 import { useTimer } from '@/lib/TimerContext';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import SessionSettingsButton from '@/components/sessions/SessionSettingsButton';
 import PomodoroSettings from '@/components/sessions/PomodoroSettings';
 import Celebration from '@/components/sessions/Celebration';
-
-const CircularProgress = ({ progress, size = 400, strokeWidth = 12, isBreak = false }) => {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (progress / 100) * circumference;
-
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Background circle */}
-        <circle
-          className="text-black"
-          strokeWidth={strokeWidth}
-          stroke="currentColor"
-          fill="transparent"
-          r={radius}
-          cx={size / 2}
-          cy={size / 2}
-        />
-        {/* Progress circle with gradient */}
-        <defs>
-          {isBreak ? (
-            <linearGradient id="breakGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#4A90E2" />
-              <stop offset="100%" stopColor="#9B51E0" />
-            </linearGradient>
-          ) : (
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#CEABB1" />
-              <stop offset="100%" stopColor="#7DCEA0" />
-            </linearGradient>
-          )}
-        </defs>
-        <circle
-          className="transition-all duration-1000 ease-linear"
-          stroke={isBreak ? "url(#breakGradient)" : "url(#progressGradient)"}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          fill="transparent"
-          r={radius}
-          cx={size / 2}
-          cy={size / 2}
-        />
-      </svg>
-    </div>
-  );
-};
+import CircularProgress from '@/components/sessions/CircularProgress';
+import { Tooltip } from '@mui/material';
 
 const Timer = ({ initialDuration, initialTopic }) => {
   const { user } = useAuth();
   const { 
-    time, 
+    remainingTime, 
     isRunning, 
     formatTime, 
     startTimer, 
     pauseTimer, 
     resumeTimer, 
-    handleSessionEnd,
+    handleTimerEnd,
     isBreak,
     startBreak,
     handleBreakEnd,
@@ -151,13 +112,13 @@ const Timer = ({ initialDuration, initialTopic }) => {
   ];
 
   const handleStart = () => {
-    if (time > 0) {
+    if (remainingTime > 0) {
       console.log('Starting timer with topic:', selectedTopic);
       console.log('Topic ID type:', typeof selectedTopic?.id);
       console.log('Topic ID value:', selectedTopic?.id);
       console.log('Topic ID string representation:', String(selectedTopic?.id));
-      setInitialTime(time);
-      startTimer(time);
+      setInitialTime(remainingTime);
+      startTimer(remainingTime);
     }
   };
 
@@ -170,25 +131,29 @@ const Timer = ({ initialDuration, initialTopic }) => {
   };
 
   const handleAddTime = (seconds) => {
-    console.log('Adding time with current topic:', selectedTopic);
-    console.log('Topic ID type:', typeof selectedTopic?.id);
-    console.log('Topic ID value:', selectedTopic?.id);
-    console.log('Topic ID string representation:', String(selectedTopic?.id));
     if (isRunning) {
       pauseTimer();
-      const newTime = time + seconds;
+      const newTime = remainingTime + seconds;
       setInitialTime(newTime);
       startTimer(newTime);
     } else {
-      const newTime = time + seconds;
+      const newTime = remainingTime + seconds;
       setInitialTime(newTime);
       startTimer(newTime);
     }
   };
 
   const handleExit = () => {
-    handleSessionEnd(true);
+    handleTimerEnd(true);
+    setShowCelebration(true);
   };
+
+  // Add effect to show celebration when timer naturally ends
+  useEffect(() => {
+    if (remainingTime === 0 && initialTime > 0 && !isBreak && !isPomodoro) {
+      setShowCelebration(true);
+    }
+  }, [remainingTime, initialTime, isBreak, isPomodoro]);
 
   const handleTimerClickEvent = () => {
     if (!isRunning && !isEditing) {
@@ -258,7 +223,7 @@ const Timer = ({ initialDuration, initialTopic }) => {
 
   const calculateProgress = () => {
     if (!initialTime || initialTime === 0) return 0;
-    return ((initialTime - time) / initialTime) * 100;
+    return ((initialTime - remainingTime) / initialTime) * 100;
   };
 
   const handleBreakToggle = () => {
@@ -272,11 +237,6 @@ const Timer = ({ initialDuration, initialTopic }) => {
   const pomodoroStatus = getPomodoroStatus();
 
   const handleTopicSelect = (topic) => {
-    console.log('Topic selected in Timer - Raw data:', topic);
-    console.log('Topic ID type:', typeof topic.topic_id);
-    console.log('Topic ID value:', topic.topic_id);
-    console.log('Topic ID string representation:', String(topic.topic_id));
-    
     if (!topic || !topic.topic_id) {
       console.error('Invalid topic selected:', topic);
       return;
@@ -294,9 +254,7 @@ const Timer = ({ initialDuration, initialTopic }) => {
       problem_solving: topic.problem_solving,
       recent_practice: topic.recent_practice
     };
-    console.log('Setting selected topic in Timer - Processed data:', selectedTopic);
-    console.log('Selected topic ID type:', typeof selectedTopic.id);
-    console.log('Selected topic ID value:', selectedTopic.id);
+    
     setSelectedTopic(selectedTopic);
     setShowTopicSelector(false);
   };
@@ -314,21 +272,29 @@ const Timer = ({ initialDuration, initialTopic }) => {
   );
 
   const presetsDropdown = (
-    <div className="bg-black-3 rounded-lg shadow-lg py-2">
-      {presets.map((p) => (
-        <button
-          key={p.value}
-          onClick={() => handlePresetSelect(p.value)}
-          className="w-48 mt-2 rounded-full border-1 px-4 py-2 text-left text-white hover:bg-black-2 transition-all duration-200 ease-in-out hover:brightness-[0.70] cursor-pointer"
-        >
-          {p.label}
-        </button>
-      ))}
+    <div className="bg-black rounded-lg shadow-lg py-2 min-w-[200px]">
+      <div className="px-4 py-2 border-b border-black">
+        <h3 className="text-white font-bold">Select Duration</h3>
+        <p className="text-gray-300 text-sm">
+          Choose a preset duration for your study session
+        </p>
+      </div>
+      <div className="max-h-[300px] overflow-y-auto">
+        {presets.map((p) => (
+          <button
+            key={p.value}
+            onClick={() => handlePresetSelect(p.value)}
+            className="w-full px-4 py-2 text-left text-white hover:bg-black transition-all duration-200 ease-in-out hover:brightness-[0.70] cursor-pointer"
+          >
+            <div className="font-medium">{p.label}</div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 
   const topicDropdown = (
-    <div className="bg-black-3 rounded-lg shadow-lg py-2 min-w-[200px]">
+    <div className="bg-black rounded-lg shadow-lg py-2 min-w-[200px]">
       <div className="px-4 py-2 border-b border-black">
         <h3 className="text-white font-bold">Select Topic</h3>
         <p className="text-gray-300 text-sm">
@@ -354,7 +320,7 @@ const Timer = ({ initialDuration, initialTopic }) => {
                   console.log('Topic clicked in dropdown:', topic);
                   handleTopicSelect(topic);
                 }}
-                className="w-full px-4 py-2 text-left text-white hover:bg-black-2 transition-all duration-200 ease-in-out hover:brightness-[0.70] cursor-pointer"
+                className="w-full px-4 py-2 text-left text-white hover:bg-black transition-all duration-200 ease-in-out hover:brightness-[0.70] cursor-pointer"
               >
                 <div className="font-medium">{topic.name}</div>
                 <div className="text-sm text-white/60">{topic.field}</div>
@@ -388,14 +354,14 @@ const Timer = ({ initialDuration, initialTopic }) => {
     if (!isPomodoro) {
       setShowPomodoroSettings(true);
     } else {
-      handleSessionEnd(false);
+      handleTimerEnd(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center bg-black justify-center p-4">
       <div className="w-[80vw] p-6 xl:w-[60vw] rounded-mg sm:rounded-sm xl:rounded-full h-full">
-        <div className="bg-black-2 rounded-3xl p-8 shadow-lg flex flex-col items-center ml-8">
+        <div className="bg-black rounded-3xl p-8 shadow-lg flex flex-col items-center ml-8">
           <div className="text-center mb-4">
             <h2 className="text-2xl font-bold text-white">
               {isPomodoro 
@@ -437,7 +403,7 @@ const Timer = ({ initialDuration, initialTopic }) => {
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-[50px] sm:text-[70px] md:text-[80px] xl:text-[100px] font-bold text-white">
-                    {formatTime(time)}
+                    {formatTime(remainingTime)}
                   </div>
                 </div>
               </div>
@@ -453,7 +419,7 @@ const Timer = ({ initialDuration, initialTopic }) => {
                   <button
                     key={value}
                     onClick={() => handleAddTime(value)}
-                    className="px-4 py-2 rounded-full bg-black-3 text-white hover:bg-black-1 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer text-sm"
+                    className="px-4 py-2 rounded-full bg-black text-white hover:bg-black transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer text-sm"
                   >
                     {label}
                   </button>
@@ -465,14 +431,14 @@ const Timer = ({ initialDuration, initialTopic }) => {
               {!isRunning ? (
                 <button
                   onClick={handleStart}
-                  className="px-20 rounded-full bg-gradient-to-r from-[#CEABB1] to-[#7DCEA0] text-bg1 hover:opacity-90 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer"
+                  className="w-12 h-12 rounded-full bg-gradient-to-r from-[#CEABB1] to-[#7DCEA0] text-bg1 hover:opacity-90 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer flex items-center justify-center"
                 >
                   <IconPlayerPlay size={24} />
                 </button>
               ) : (
                 <button
                   onClick={handlePause}
-                  className="px-20 rounded-full bg-gradient-to-r from-[#CEABB1] to-[#7DCEA0] text-bg1 hover:opacity-90 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer"
+                  className="w-12 h-12 rounded-full bg-gradient-to-r from-[#CEABB1] to-[#7DCEA0] text-bg1 hover:opacity-90 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer flex items-center justify-center"
                 >
                   <IconPlayerPause size={24} />
                 </button>
@@ -480,10 +446,10 @@ const Timer = ({ initialDuration, initialTopic }) => {
               
               <button
                 onClick={handleBreakToggle}
-                className={`px-20 rounded-full transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer ${
+                className={`w-12 h-12 rounded-full transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer flex items-center justify-center ${
                   isBreak 
                     ? 'bg-gradient-to-r from-[#4A90E2] to-[#9B51E0]' 
-                    : 'bg-black-3 hover:bg-black-1'
+                    : 'bg-black hover:bg-black'
                 }`}
               >
                 <IconMoon size={24} className="text-white" />
@@ -491,20 +457,22 @@ const Timer = ({ initialDuration, initialTopic }) => {
 
               <button
                 onClick={handleExit}
-                className="px-20 rounded-full bg-red-600 text-white hover:bg-red-700 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer"
+                className="w-12 h-12 rounded-full bg-red-600 text-white hover:bg-red-700 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer flex items-center justify-center"
               >
                 <IconX size={24} />
               </button>
 
               {!isBreak && !isPomodoro && (
                 <>
-                  <button
-                    onClick={handlePomodoroClick}
-                    className="px-20 rounded-full bg-black-3 text-white hover:bg-black-1 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer"
-                  >
-                    <IconClock size={24} />
-                    <span className='inline'>(Pomdoro)</span>
-                  </button>
+                  <Tooltip title="Start a Pomodoro session">
+                    <button
+                      onClick={handlePomodoroClick}
+                      className="w-auto px-4 h-12 rounded-full bg-black text-white hover:bg-black transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <IconClock size={24} />
+                      <span className="text-sm">Pomodoro</span>
+                    </button>
+                  </Tooltip>
 
                   <SessionSettingsButton
                     icon={IconList}
@@ -520,6 +488,7 @@ const Timer = ({ initialDuration, initialTopic }) => {
                     onMouseEnter={() => setShowTopicSelector(true)}
                     onMouseLeave={() => setShowTopicSelector(false)}
                     dropdownContent={topicDropdown}
+                    alignLeft={true}
                   />
                 </>
               )}
@@ -529,18 +498,26 @@ const Timer = ({ initialDuration, initialTopic }) => {
       </div>
 
       {/* Pomodoro Settings Sidebar */}
-      <PomodoroSettings
-        isOpen={showPomodoroSettings}
-        onClose={() => setShowPomodoroSettings(false)}
-        settings={pomodoroSettings}
-        onSettingsChange={handlePomodoroSettingsChange}
-        onStart={handleStartPomodoro}
-      />
+      {showPomodoroSettings && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setShowPomodoroSettings(false)}
+        >
+          <PomodoroSettings
+            isOpen={showPomodoroSettings}
+            onClose={() => setShowPomodoroSettings(false)}
+            settings={pomodoroSettings}
+            onSettingsChange={handlePomodoroSettingsChange}
+            onStart={handleStartPomodoro}
+          />
+        </div>
+      )}
 
       {showCelebration && (
         <Celebration
+          isVisible={showCelebration}
           onClose={() => setShowCelebration(false)}
-          duration={initialTime - time}
+          duration={initialTime - remainingTime}
         />
       )}
     </div>
@@ -584,7 +561,7 @@ export default function SessionsPage() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-black-1">
+    <div className="min-h-screen bg-black">
       <Timer initialDuration={initialDuration} initialTopic={initialTopic} />
     </div>
   );

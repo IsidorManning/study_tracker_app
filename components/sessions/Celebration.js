@@ -1,8 +1,9 @@
 "use client";
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { IconTrophy, IconStar, IconCheck } from '@tabler/icons-react';
+import { IconTrophy } from '@tabler/icons-react';
 import confetti from 'canvas-confetti';
+import { useEffect } from 'react';
 
 const Celebration = ({ isVisible, onClose }) => {
   const triggerConfetti = () => {
@@ -17,32 +18,39 @@ const Celebration = ({ isVisible, onClose }) => {
     const interval = setInterval(() => {
       const timeLeft = animationEnd - Date.now();
 
-      if (timeLeft <= 0) {
+      if (timeLeft <= 1) {
         return clearInterval(interval);
       }
 
       const particleCount = 50 * (timeLeft / duration);
       
-      // Confetti from the left
+      // Confetti from multiple angles
       confetti({
         ...defaults,
         particleCount,
         origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
       });
       
-      // Confetti from the right
       confetti({
         ...defaults,
         particleCount,
         origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
       });
+
+      confetti({
+        ...defaults,
+        particleCount: particleCount / 2,
+        origin: { x: 0.5, y: 0.1 }
+      });
     }, 250);
   };
 
-  // Trigger confetti when component mounts
-  if (isVisible) {
-    triggerConfetti();
-  }
+  // Trigger confetti when component becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      triggerConfetti();
+    }
+  }, [isVisible]);
 
   return (
     <AnimatePresence>
@@ -55,9 +63,9 @@ const Celebration = ({ isVisible, onClose }) => {
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.5, opacity: 0 }}
+            initial={{ scale: 0.5, opacity: 0, y: 50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.5, opacity: 0, y: 50 }}
             transition={{ type: "spring", damping: 15, stiffness: 200 }}
             className="bg-black-2 p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 relative overflow-hidden"
             onClick={e => e.stopPropagation()}
@@ -77,9 +85,9 @@ const Celebration = ({ isVisible, onClose }) => {
             {/* Content */}
             <div className="relative z-10 text-center">
               <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
+                initial={{ y: -20, opacity: 0, scale: 0.5 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
                 className="mb-6"
               >
                 <IconTrophy size={64} className="text-pink mx-auto" />

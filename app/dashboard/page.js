@@ -1,9 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import {
-  IconTimeDuration45,
-  IconFocus2,
-  IconZoom,
   IconFlame,
 } from "@tabler/icons-react"
 import Link from 'next/link';
@@ -14,41 +11,41 @@ import { useTimer } from '@/lib/TimerContext';
 
 const DashboardCard = ({ title, description, href, icon }) => (
   <Link href={href} className="group block">
-    <div className="h-full p-6 rounded-lg border border-acc-1 bg-black-2 hover:bg-black-3 transition-all duration-300 transform hover:scale-[1.02]">
+    <div className="h-full p-6 rounded-lg border border-white bg-black hover:bg-black transition-all duration-300 transform hover:scale-[1.02]">
       <div className="flex flex-col h-full">
-        <div className="mb-4 text-pink-3 text-[50px] group-hover:text-ctext-1 transition-colors duration-300">
+        <div className="mb-4 text-pink-3 text-[50px] group-hover:text-white transition-colors duration-300">
           {icon}
         </div>
-        <h3 className="text-xl font-semibold mb-2 text-ctext-1">{title}</h3>
-        <p className="text-pink-2 group-hover:text-pink-3 transition-colors duration-300">{description}</p>
+        <h3 className="text-xl font-semibold mb-2 text-white group-hover:text-pink">{title}</h3>
+        <p className="text-white transition-colors duration-300">{description}</p>
       </div>
     </div>
   </Link>
 );
 
 const TotalStudyTime = ({ totalSeconds, currentSessionTime, isRunning, formatTime, isBreak }) => {
-  const formatTimeReadable = (seconds) => {
+  const formatStudyTimeReadable = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
 
-    const parts = [];
-    if (hours > 0) parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
-    if (minutes > 0) parts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
-    if (secs > 0) parts.push(`${secs} second${secs === 1 ? '' : 's'}`);
+    const timeParts = []; // [hours, minutes, seconds]
+    if (hours > 0) timeParts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
+    if (minutes > 0) timeParts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
+    if (secs > 0) timeParts.push(`${secs} second${secs === 1 ? '' : 's'}`);
 
-    if (parts.length === 0) return "0 seconds";
+    if (timeParts.length === 0) return "0 seconds";
 
-    if (parts.length === 1) return parts[0];
-    if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
-    return `${parts[0]}, ${parts[1]}, and ${parts[2]}`;
+    if (timeParts.length === 1) return timeParts[0];
+    if (timeParts.length === 2) return `${timeParts[0]} and ${timeParts[1]}`;
+    return `${timeParts[0]}, ${timeParts[1]}, and ${timeParts[2]}`;
   };
 
   return (
-    <div className="bg-black rounded-lg p-6 border border-acc-1 mb-8">
+    <div className="bg-black rounded-lg p-6 border border-white mb-8">
       <div className="flex justify-between items-center">
         <p className="text-2xl text-white">
-          <span className="text-pink font-semibold">{formatTimeReadable(totalSeconds)}</span> of being curious
+          <span className="text-pink font-semibold">{formatStudyTimeReadable(totalSeconds)}</span> of being curious
         </p>
         {isRunning && (
           <UnderlineLink href="/sessions" className="text-xl text-white hover:text-pink transition-colors duration-200">
@@ -85,8 +82,14 @@ export default function Dashboard() {
   const [totalStudyTime, setTotalStudyTime] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
-  const username = user?.user_metadata?.username || user?.user_metadata?.full_name || 'there';
-  const { time, isRunning, totalStudyTime: currentSessionTotalTime, formatTime, isBreak } = useTimer();
+  const username = user?.user_metadata?.username || 'there';
+  const { 
+    time, 
+    isRunning, 
+    totalStudyTime: currentSessionTotalTime, 
+    formatTime, 
+    isBreak 
+  } = useTimer();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -100,7 +103,10 @@ export default function Dashboard() {
           .eq('user_id', user.id);
 
         if (sessionsError) throw sessionsError;
-
+        
+        // Get the total number of seconds studied for all sessions; 
+        // start at 0, loop through each session, and for each, add up the total seconds
+        // for that sesh in sum.
         const total = sessions.reduce((sum, session) => sum + session.total_seconds, 0);
         setTotalStudyTime(total);
 
@@ -112,17 +118,19 @@ export default function Dashboard() {
           .maybeSingle();
 
         if (streakError && streakError.code !== 'PGRST116') throw streakError;
+
         setCurrentStreak(streakData?.current_streak || 0);
         setLongestStreak(streakData?.longest_streak || 0);
+
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
 
     fetchUserData();
-  }, [user]);
+  }, [user]); // If the user changes we fetch the new data
 
-  const cards = [
+  const dashboardCards = [
     {
       title: "Study Sessions",
       description: "Track and manage your study sessions. View your progress and maintain consistency.",
@@ -130,16 +138,22 @@ export default function Dashboard() {
       icon: "⏱️",
     },
     {
-      title: "Goals",
-      description: "Set and track your learning goals. Stay motivated and achieve your targets.",
-      href: "/goals",
-      icon: "🎯",
+      title: "Schedules",
+      description: "Plan your week by allocating studytime for your topics",
+      href: "/schedules",
+      icon: "📅",
     },
     {
       title: "Topics",
       description: "Track your knowledge mastery across different subjects. Rate your understanding and monitor your learning progress.",
       href: "/topics",
       icon: "🧠",
+    },
+    {
+      title: "Goals",
+      description: "Set and track your learning goals. Stay motivated and achieve your targets.",
+      href: "/goals",
+      icon: "🎯",
     },
     {
       title: "Analytics",
@@ -151,17 +165,23 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen flex justify-center flex-col p-10 xl:p-40">
-      {/* Welcome Section */}
+
+      {/* Overview section */}
       <div className="mb-12">
+
+        {/* Welcome section */}
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-4xl font-bold text-ctext-1">
+          <h1 className="text-4xl font-bold text-white">
             Welcome back <UnderlineLink href="/settings" className="text-pink inline">{username}</UnderlineLink>
           </h1>
+
+          {/* Streak display */}
           <StreakDisplay currentStreak={currentStreak} longestStreak={longestStreak} />
         </div>
-        {/* Total Study Time with Current Session */}
+
+        {/* Total study time with current session */}
         <TotalStudyTime 
-          totalSeconds={totalStudyTime + (isRunning ? currentSessionTotalTime : 0)} 
+          totalSeconds={totalStudyTime + (isRunning ? currentSessionTotalTime : 0)}
           currentSessionTime={time}
           isRunning={isRunning}
           formatTime={formatTime}
@@ -174,7 +194,7 @@ export default function Dashboard() {
 
       {/* Grid Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cards.map((card, index) => (
+        {dashboardCards.map((card, index) => (
           <DashboardCard key={index} {...card} />
         ))}
       </div>

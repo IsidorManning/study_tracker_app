@@ -7,7 +7,8 @@ const SessionSettingsButton = ({
   onMouseEnter,
   onMouseLeave,
   dropdownContent,
-  className = "text-pink hover:text-white transition-all duration-200 ease-in-out hover:scale-110 cursor-pointer"
+  className = "text-pink hover:text-white transition-all duration-200 ease-in-out hover:scale-110 cursor-pointer",
+  alignLeft = false
 }) => {
   return (
     <div 
@@ -22,7 +23,7 @@ const SessionSettingsButton = ({
       </button>
       
       {tooltip && showDropdown && (
-        <div className="absolute right-0 bottom-full mb-2 p-4 bg-black-3 rounded-lg shadow-lg w-64 z-50">
+        <div className={`absolute ${alignLeft ? 'left-0' : 'right-0'} bottom-full mb-2 p-4 bg-black-3 rounded-lg shadow-lg w-64 z-50`}>
           {tooltip}
         </div>
       )}
@@ -30,7 +31,7 @@ const SessionSettingsButton = ({
       {dropdownContent && (
         <div
           className={`
-            absolute right-0 bottom-full mb-2
+            absolute ${alignLeft ? 'left-0' : 'right-0'} bottom-full mb-2
             overflow-hidden bg-black p-2 rounded-lg
             transition-all duration-200 ease-out
             z-50

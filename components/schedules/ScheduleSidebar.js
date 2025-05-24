@@ -1,304 +1,153 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { IconX } from '@tabler/icons-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { TextField, Select, MenuItem, FormControl, InputLabel, Button, Chip, OutlinedInput, Box } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-// Assuming you have a file for topics data or fetch it from Supabase
-// import { fetchTopics } from '@/lib/api';
-import { useAuth } from '@/lib/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { useState, useEffect } from 'react';
+import { IconCalendar } from '@tabler/icons-react';
+import SlideInSidebar from '@/components/SlideInSidebar';
 
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-      backgroundColor: '#1a1a1a', // Dark background for dropdown
-      color: 'white', // White text for dropdown items
-    },
-  },
-};
-
-const daysOfWeek = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-];
-
-function getStyles(day, selectedDays, theme) {
-  return {
-    fontWeight:
-      selectedDays.indexOf(day) === -1
-        ? theme.typography.fontWeightRegular
-        : theme.typography.fontWeightMedium,
-  };
-}
-
-const ScheduleSidebar = ({ isOpen, onClose, onSave, editingSchedule, allTopics }) => {
-  const sidebarRef = useRef(null);
-  const theme = useTheme();
+const ScheduleSidebar = ({
+  isOpen,
+  onClose,
+  onSave,
+  editingSchedule,
+  allTopics
+}) => {
   const [formData, setFormData] = useState({
     topic_id: '',
     day_of_week: [],
-    start_time: '09:00', // Default start time
-    duration: 60, // Default duration in minutes
+    start_time: '',
+    duration: 25,
+    is_active: true
   });
-  const { user } = useAuth();
 
-  // Effect to close sidebar when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose]);
-
-  // Effect to populate form when editingSchedule changes
   useEffect(() => {
     if (editingSchedule) {
-      // Convert numeric day_of_week back to names for the form
-      const daysAsNames = editingSchedule.day_of_week.map(dayIndex => daysOfWeek[dayIndex]);
+      // Convert day numbers to names for the form
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const days = editingSchedule.day_of_week.map(day => dayNames[day]);
+      
       setFormData({
-        topic_id: editingSchedule.topic_id,
-        day_of_week: daysAsNames,
-        start_time: editingSchedule.start_time || '09:00', // Use default if somehow missing
-        duration: editingSchedule.duration || 60, // Use default if somehow missing
+        ...editingSchedule,
+        day_of_week: days
       });
     } else {
-      // Reset form for adding a new schedule
+      // Reset form when opening for new schedule
       setFormData({
         topic_id: '',
         day_of_week: [],
-        start_time: '09:00',
-        duration: 60,
+        start_time: '12:00', // Set a default time
+        duration: 25,
+        is_active: true
       });
     }
-  }, [editingSchedule]); // Depend on editingSchedule
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleDaysChange = (event) => {
-    const { value } = event.target;
-    setFormData({
-      ...formData,
-      day_of_week: typeof value === 'string' ? value.split(',') : value,
-    });
-  };
+  }, [editingSchedule]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave(formData);
-    // Reset form after saving
-    setFormData({
-      topic_id: '',
-      day_of_week: [],
-      start_time: '09:00',
-      duration: 60,
-    });
+  };
+
+  const handleDayToggle = (day) => {
+    setFormData(prev => ({
+      ...prev,
+      day_of_week: prev.day_of_week.includes(day)
+        ? prev.day_of_week.filter(d => d !== day)
+        : [...prev.day_of_week, day]
+    }));
+  };
+
+  const handleInputClick = (e) => {
+    e.stopPropagation();
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black z-40"
-            onClick={onClose}
-          />
-          <motion.div
-            ref={sidebarRef}
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-[480px] bg-black border-l border-acc-1 p-6 overflow-y-auto z-50"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">{editingSchedule ? 'Edit Schedule' : 'Add New Schedule'}</h2>
-              <button
-                onClick={onClose}
-                className="text-white hover:text-pink transition-colors"
-              >
-                <IconX size={24} />
-              </button>
+    <SlideInSidebar
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingSchedule ? "Edit Schedule" : "Add Schedule"}
+    >
+      <form onSubmit={handleSubmit} className="p-6 space-y-6" onClick={handleInputClick}>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Topic
+            </label>
+            <select
+              value={formData.topic_id}
+              onChange={(e) => setFormData(prev => ({ ...prev, topic_id: e.target.value }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
+              required
+            >
+              <option value="">Select a topic</option>
+              {allTopics.map(topic => (
+                <option key={topic.id} value={topic.id}>
+                  {topic.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Days of Week
+            </label>
+            <div className="grid grid-cols-7 gap-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => handleDayToggle(day)}
+                  className={`p-2 rounded-lg text-sm ${
+                    formData.day_of_week.includes(day)
+                      ? 'bg-pink text-white'
+                      : 'bg-black-3 text-white/60 hover:text-white border border-white/20'
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Topic Select */}
-              <FormControl fullWidth>
-                <InputLabel id="topic-select-label" sx={{ color: 'white' }}>Topic</InputLabel>
-                <Select
-                  labelId="topic-select-label"
-                  id="topic-select"
-                  name="topic_id"
-                  value={formData.topic_id}
-                  onChange={handleChange}
-                  label="Topic"
-                  required
-                  sx={{
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: '#4A5568' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#E91E63' },
-                    '.MuiSvgIcon-root': { color: 'white' },
-                    color: 'white',
-                  }}
-                  MenuProps={MenuProps}
-                >
-                  {allTopics.map((topic) => (
-                    <MenuItem
-                      key={topic.id}
-                      value={topic.id}
-                      sx={{
-                        '&:hover': { backgroundColor: 'rgba(233, 30, 99, 0.1)' },
-                        '&.Mui-selected': { backgroundColor: 'rgba(233, 30, 99, 0.2)' },
-                        '&.Mui-selected:hover': { backgroundColor: 'rgba(233, 30, 99, 0.3)' },
-                      }}
-                    >
-                      {topic.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Start Time
+            </label>
+            <input
+              type="time"
+              value={formData.start_time}
+              onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
+              required
+            />
+          </div>
 
-              {/* Days of Week Select */}
-              <FormControl fullWidth>
-                <InputLabel id="days-select-label" sx={{ color: 'white' }}>Days of Week</InputLabel>
-                <Select
-                  labelId="days-select-label"
-                  id="days-select"
-                  multiple
-                  value={formData.day_of_week}
-                  onChange={handleDaysChange}
-                  input={<OutlinedInput id="select-multiple-chip" label="Days of Week" sx={{
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: '#4A5568' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#E91E63' },
-                    '.MuiSvgIcon-root': { color: 'white' },
-                    color: 'white',
-                  }} />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip key={value} label={value} sx={{ backgroundColor: '#E91E63', color: 'white' }} />
-                      ))}
-                    </Box>
-                  )}
-                  MenuProps={MenuProps}
-                  required
-                  sx={{
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: '#4A5568' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#E91E63', },
-                    '.MuiSvgIcon-root': { color: 'white' },
-                    color: 'white',
-                  }}
-                >
-                  {daysOfWeek.map((day) => (
-                    <MenuItem
-                      key={day}
-                      value={day}
-                      style={getStyles(day, formData.day_of_week, theme)}
-                      sx={{
-                        '&:hover': { backgroundColor: 'rgba(233, 30, 99, 0.1)' },
-                        '&.Mui-selected': { backgroundColor: 'rgba(233, 30, 99, 0.2)' },
-                        '&.Mui-selected:hover': { backgroundColor: 'rgba(233, 30, 99, 0.3)' },
-                        color: 'white',
-                      }}
-                    >
-                      {day}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Duration (minutes)
+            </label>
+            <input
+              type="number"
+              value={formData.duration}
+              onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
+              min="1"
+              max="240"
+              required
+            />
+          </div>
+        </div>
 
-              {/* Start Time */}
-              <TextField
-                label="Start Time"
-                type="time"
-                name="start_time"
-                value={formData.start_time}
-                onChange={handleChange}
-                fullWidth
-                InputLabelProps={{
-                  shrink: true,
-                  sx: { color: 'white' },
-                }}
-                InputProps={{
-                  sx: {
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: '#4A5568' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#E91E63' },
-                    '.MuiSvgIcon-root': { color: 'white' },
-                    color: 'white',
-                  }
-                }}
-                required
-              />
-
-              {/* Duration */}
-              <TextField
-                label="Duration (minutes)"
-                type="number"
-                name="duration"
-                value={formData.duration}
-                onChange={handleChange}
-                fullWidth
-                InputLabelProps={{
-                  shrink: true,
-                  sx: { color: 'white' },
-                }}
-                InputProps={{
-                  sx: {
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: '#4A5568' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#E91E63' },
-                    '.MuiSvgIcon-root': { color: 'white' },
-                    color: 'white',
-                  }
-                }}
-                required
-                inputProps={{ min: 15, step: 15 }}
-              />
-
-              {/* Save Button */}
-              <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                sx={{
-                  mt: 4,
-                  backgroundColor: '#E91E63',
-                  '&:hover': { backgroundColor: '#C2185B' },
-                  color: 'white',
-                  py: 1.5,
-                  fontSize: '1rem',
-                }}
-              >
-                Save Schedule
-              </Button>
-            </form>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        <div className="pt-6">
+          <button
+            type="submit"
+            className="w-full py-3 px-6 rounded-lg bg-pink text-white font-medium hover:opacity-90 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
+          >
+            <IconCalendar size={20} />
+            {editingSchedule ? "Update Schedule" : "Add Schedule"}
+          </button>
+        </div>
+      </form>
+    </SlideInSidebar>
   );
 };
 

@@ -6,6 +6,7 @@ import { IconX, IconPlus, IconEdit, IconTrash, IconFilter, IconSearch, IconCalen
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, IconButton, Tooltip } from '@mui/material';
+import SlideInSidebar from '@/components/SlideInSidebar';
 
 const GoalSidebar = ({ isOpen, onClose, onSave, editingGoal }) => {
   const [formData, setFormData] = useState({
@@ -25,129 +26,120 @@ const GoalSidebar = ({ isOpen, onClose, onSave, editingGoal }) => {
   };
 
   return (
-    <>
-      {/* Overlay */}
-      <div 
-        className={`fixed inset-0 bg-black/50 transition duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={onClose}
-      />
-      
-      {/* Sidebar */}
-      <div 
-        className={`fixed top-0 right-0 bg-black z-[10] h-screen bg-mbg-3 shadow-2xl transition-all duration-300 ease-in-out ${
-          isOpen ? 'w-full md:w-120 translate-x-0' : 'w-full md:w-120 translate-x-full'
-        }`}
-      >
-        <div className="p-6 h-full overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-white">
-              {editingGoal ? 'Edit Goal' : 'Create Goal'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-mbg-2 rounded-lg transition-colors"
-            >
-              <IconX className="text-white" />
-            </button>
+    <SlideInSidebar
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingGoal ? "Edit Goal" : "Create Goal"}
+    >
+      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Title
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
+              required
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-white mb-1">Title</label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
-                required
-              />
-            </div>
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
+              rows="3"
+            />
+          </div>
 
-            <div>
-              <label className="block text-white mb-1">Description</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
-                rows="3"
-              />
-            </div>
-
-            <div>
-              <label className="block text-white mb-1">Type</label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
-              >
-                <option value="weekly_hours">Weekly Study Hours</option>
-                <option value="daily_streak">Daily Study Streak</option>
-                <option value="subject">Subject-Specific</option>
-                <option value="project">Project Milestone</option>
-                <option value="exam">Exam Preparation</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-white mb-1">Target Value (hours)</label>
-              <input
-                type="number"
-                value={formData.target_value}
-                onChange={(e) => setFormData({ ...formData, target_value: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-white mb-1">Start Date</label>
-                <input
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-white mb-1">End Date</label>
-                <input
-                  type="date"
-                  value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-white mb-1">Status</label>
-              <select
-                value={formData.goal_status}
-                onChange={(e) => setFormData({ ...formData, goal_status: e.target.value })}
-                className="w-full p-2 rounded-lg bg-mbg-2 border border-acc-1 text-white"
-              >
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="paused">Paused</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2 px-4 bg-pink text-white rounded-lg hover:bg-pink/90 transition-colors"
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Goal Type
+            </label>
+            <select
+              value={formData.goal_type}
+              onChange={(e) => setFormData(prev => ({ ...prev, goal_type: e.target.value }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
             >
-              {editingGoal ? 'Update Goal' : 'Create Goal'}
-            </button>
-          </form>
+              <option value="weekly_hours">Weekly Study Hours</option>
+              <option value="daily_hours">Daily Study Hours</option>
+              <option value="topic_mastery">Topic Mastery</option>
+              <option value="completion">Task Completion</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Target Value
+            </label>
+            <input
+              type="number"
+              value={formData.target_value}
+              onChange={(e) => setFormData(prev => ({ ...prev, target_value: e.target.value }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Start Date
+            </label>
+            <input
+              type="date"
+              value={formData.start_date}
+              onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-white font-medium mb-2">
+              End Date
+            </label>
+            <input
+              type="date"
+              value={formData.end_date}
+              onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-white font-medium mb-2">
+              Status
+            </label>
+            <select
+              value={formData.goal_status}
+              onChange={(e) => setFormData(prev => ({ ...prev, goal_status: e.target.value }))}
+              className="w-full p-3 rounded-lg bg-black-3 text-white border border-white/20 focus:border-pink focus:outline-none"
+            >
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="paused">Paused</option>
+            </select>
+          </div>
         </div>
-      </div>
-    </>
+
+        <div className="pt-6">
+          <button
+            type="submit"
+            className="w-full py-3 px-6 rounded-lg bg-pink text-white font-medium hover:opacity-90 transition-all duration-200 ease-in-out hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
+          >
+            <IconCalendar size={20} />
+            {editingGoal ? "Update Goal" : "Create Goal"}
+          </button>
+        </div>
+      </form>
+    </SlideInSidebar>
   );
 };
 
